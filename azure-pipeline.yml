@@ -6,17 +6,17 @@ pool:
 
 resources:
   repositories:
-    - repository: RepoEmiAutomatizacion
+    - repository: RepoEmiAutomatizacionSOCloud
       type: git
       ref: master
-#      name: ContratoDigital/_git/digitalcontract-automatizedtests-qa
+      name: SOCloud/_git/SOCloud.Automatizacion.Web
 
 stages:
-  - stage: escenarios_generar_contrato
-    displayName: Escenarios Contrato Digital
+  - stage: escenarios_socloud
+    displayName: Escenarios SOCloud
     jobs:
-      - job: ejecutar_escenarios_contrato_digital
-        displayName: Ejecucion Escenarios Contrato Digital
+      - job: ejecutar_escenarios
+        displayName: Ejecucion Escenarios
         steps:
           - checkout: RepoEmiAutomatizacion
           - task: JavaToolInstaller@0
@@ -29,12 +29,19 @@ stages:
             displayName: Limpiar Reporte
             inputs:
               script: |
-                mvn clean
+                gradle clearReports
           - task: CmdLine@2
             displayName: Ejecucion Escenarios
             inputs:
               script: |
-                mvn clean verify -Denvironment=qa
+                gradle clean test aggregate -Denvironment=qa
+          - task: CmdLine@2
+            displayName: ReEjecucion Escenarios Fallidos
+            condition: failed()
+            retryCountOnTaskFailure: 2
+            inputs:
+  #             script: |
+  #                gradle test --tests "com.grupoemi.runners.RerunFailedScenarios"
           - task: CopyFiles@2
             displayName: copyTargetFolder
             condition: always()
@@ -47,5 +54,5 @@ stages:
             condition: always()
             inputs:
               PathtoPublish: '$(System.DefaultWorkingDirectory)/target/site/serenity'
-              ArtifactName: 'Informe Ejecución seguridad'
+              ArtifactName: 'Informe Ejecución Escenarios SOCloud'
               publishLocation: 'Container'

@@ -10,13 +10,13 @@ public class Login {
     }
 
     public static final Target TEXTO_USUARIO = Target.the("Ingresa el Usuario")
-            .locatedBy("//input[contains(@type,'email')]");
+            .located(By.id("emailInput"));
 
     public static final Target TEXTO_PASWORD = Target.the("Ingresa el password")
-            .locatedBy("//input[contains(@type,'password')]");
+            .located(By.id("passwordInput"));
 
     public static final Target BOTON_INGRESAR = Target.the("clic en ingresar")
-            .locatedBy("//span[@class='mdc-button__label'][contains(.,'Iniciar Sesión')]");
+            .located(By.id("submitButton"));
 
     public static final Target PAGINA_INICIO = Target.the("espera la pagina de inicio")
             .locatedBy("//span[@class='logo-name'][contains(.,'Autenticador')]");

@@ -1,12 +1,17 @@
 package com.grupoemi.seguridad.runners;
 
-import org.junit.platform.suite.api.IncludeEngines;
-import org.junit.platform.suite.api.SelectClasspathResource;
-import org.junit.platform.suite.api.Suite;
+import io.cucumber.junit.CucumberOptions;
+import net.serenitybdd.cucumber.CucumberWithSerenity;
+import org.junit.runner.RunWith;
 
-@Suite
-@IncludeEngines("cucumber")
-@SelectClasspathResource("/features")
+@RunWith(CucumberWithSerenity.class)
+@CucumberOptions(
+        snippets = CucumberOptions.SnippetType.UNDERSCORE,
+        features = "src/test/resources/features/seguridad/Login.feature",
+        glue = "com.grupoemi.seguridad.stepdefinitions"
+//        plugin = {"rerun:target/rerunFailed/FailedScenariosRerun.txt"},
+//        tags = "@Titular_Beneficiario_Producto_Virtual_No"
+)
 
 public class SeguridadLogin {
 }
