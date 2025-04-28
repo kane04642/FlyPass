@@ -35,13 +35,13 @@ stages:
             inputs:
               script: |
                 gradle clean test aggregate -Denvironment=qa
-          - task: CmdLine@2
-            displayName: ReEjecucion Escenarios Fallidos
-            condition: failed()
-            retryCountOnTaskFailure: 2
-            inputs:
-  #             script: |
-  #                gradle test --tests "com.grupoemi.runners.RerunFailedScenarios"
+#          - task: CmdLine@2
+#            displayName: ReEjecucion Escenarios Fallidos
+#            condition: failed()
+#            retryCountOnTaskFailure: 2
+#            inputs:
+#  #             script: |
+#  #                gradle test --tests "com.grupoemi.runners.RerunFailedScenarios"
           - task: CopyFiles@2
             displayName: copyTargetFolder
             condition: always()
