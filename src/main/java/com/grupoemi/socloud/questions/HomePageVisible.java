@@ -1,17 +1,15 @@
-package com.grupoemi.seguridad.questions;
+package com.grupoemi.socloud.questions;
 
 import net.serenitybdd.screenplay.Actor;
 import net.serenitybdd.screenplay.Question;
 import net.serenitybdd.screenplay.questions.WebElementQuestion;
-
-
-import static com.grupoemi.seguridad.userinterface.Login.*;
+import static com.grupoemi.socloud.userinterface.Login.*;
 
 public class HomePageVisible implements Question<Boolean> {
 
     @Override
     public Boolean answeredBy(Actor actor) {
-        return WebElementQuestion.the(PAGINA_INICIO).answeredBy(actor).isCurrentlyVisible();
+        return WebElementQuestion.the(LBL_SALUD_SO).answeredBy(actor).isCurrentlyVisible();
     }
 
     public static HomePageVisible isVisible() {

@@ -1,8 +1,6 @@
 #language:es
 
-Característica: : Login Seguridad
-
-  Como usuario de ti requiero ingresar las credenciales para ingresar al seguridad de SO
+Característica: : Login SO Cloud Directorio activo
 
   Esquema del escenario: : Login Exitoso
     Dado el usuario navega a la pagina autenticador
@@ -11,5 +9,5 @@ Característica: : Login Seguridad
       | password | <password> |
     Entonces el usuario espera la pagina de home
     Ejemplos:
-      | usuario                 | password      |
-      | socloud.qa@grupoemi.com | Colombia2024* |
+      | usuario                       | password      |
+      | daniel.contreras@grupoemi.com | Colombia2025* |

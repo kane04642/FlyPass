@@ -1,11 +1,8 @@
-package com.grupoemi.seguridad.stepdefinitions;
+package com.grupoemi.socloud.stepdefinitions;
 
-import com.grupoemi.seguridad.interactions.NavegarA;
-import com.grupoemi.seguridad.questions.HomePageVisible;
-import com.grupoemi.seguridad.tasks.*;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
+import com.grupoemi.socloud.interactions.NavegarA;
+import com.grupoemi.socloud.questions.HomePageVisible;
+import com.grupoemi.socloud.tasks.LoginDA;
 import io.cucumber.java.es.Cuando;
 import io.cucumber.java.es.Dado;
 import io.cucumber.java.es.Entonces;
@@ -17,7 +14,7 @@ import static net.serenitybdd.screenplay.GivenWhenThen.seeThat;
 import static net.serenitybdd.screenplay.actors.OnStage.theActorInTheSpotlight;
 
 
-public class SeguridadStepdefinitions {
+public class LoginSOStepdefinitions {
     
     @Dado("el usuario navega a la pagina autenticador")
     public void el_usuario_navega_a_la_pagina_autenticador() {
@@ -31,7 +28,7 @@ public class SeguridadStepdefinitions {
     public void elusuarioingresalascredencialesparaautenticacion(Map<String, String>datosAccesos) {
         theActorInTheSpotlight().
                 wasAbleTo(
-                        LoginSeguridad.loginUsuario(datosAccesos)
+                        LoginDA.directorio(datosAccesos)
                 );
 
     }

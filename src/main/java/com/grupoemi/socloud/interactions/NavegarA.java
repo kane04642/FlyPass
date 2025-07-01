@@ -1,4 +1,4 @@
-package com.grupoemi.seguridad.interactions;
+package com.grupoemi.socloud.interactions;
 
 import net.serenitybdd.screenplay.Performable;
 import net.serenitybdd.screenplay.Task;
@@ -10,7 +10,7 @@ public class NavegarA {
         throw new UnsupportedOperationException("This class is not meant to be instantiated");
     }
     public static Performable seguridadHomePage() {
-        return Task.where("abre la pagina seguridad",
+        return Task.where("abre la pagina de SO  Cloud",
                 Open.browserOn().the(authenticationHomePage.class)
         );
     }
