@@ -26,7 +26,7 @@ stages:
             displayName: Ejecucion Escenarios
             inputs:
               script: |
-                gradle clean test aggregate -Denvironment=qa
+                gradle clean test jacocoTestReport aggregate -Denvironment=qa
 #          - task: CmdLine@2
 #            displayName: ReEjecucion Escenarios Fallidos
 #            condition: failed()
@@ -36,7 +36,7 @@ stages:
 #  #                gradle test --tests "com.grupoemi.runners.RerunFailedScenarios"
 
                 # Tarea para publicar los resultados de cobertura (para la pestaña "Code Coverage" en Azure DevOps)
-          - task: PublishCodeCoverageResults@1
+          - task: PublishCodeCoverageResults@2
             displayName: 'Publicar Reporte de Cobertura de Código'
             inputs:
               codeCoverageTool: JaCoCo # Especifica la herramienta de cobertura
@@ -49,7 +49,7 @@ stages:
               # sourceFileLocation: '$(System.DefaultWorkingDirectory)/src/main/java' # Ajusta según tu estructura de proyecto
 
                 # Tarea para publicar el reporte HTML de JaCoCo como un artefacto de la build
-          - task: PublishBuildArtifacts@1
+          - task: PublishBuildArtifacts@2
             displayName: 'Publicar Reporte HTML de Cobertura (JaCoCo)'
             condition: always() # Publicar siempre el reporte HTML, incluso si las pruebas fallan
             inputs:
