@@ -2,12 +2,11 @@
 
 Característica: : Login SO Cloud Directorio activo
 
+  @LoginSO
   Esquema del escenario: : Login Exitoso
     Dado el usuario navega a la pagina autenticador
-    Cuando el usuario ingresa las credenciales para autenticacion
-      | usuario  | <usuario>  |
-      | password | <password> |
+    Cuando el usuario ingresa las credenciales para autenticacion "<actor>"
     Entonces el usuario espera la pagina de home
     Ejemplos:
-      | usuario                       | password      |
-      | daniel.contreras@grupoemi.com | Colombia2025* |
+      | actor      |  |
+      | paramedico |  |
