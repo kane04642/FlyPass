@@ -6,10 +6,9 @@ import org.junit.runner.RunWith;
 
 @RunWith(CucumberWithSerenity.class)
 @CucumberOptions(
-        snippets = CucumberOptions.SnippetType.UNDERSCORE,
-        features = "src/test/resources/features/Login.feature",
-        glue = "com.grupoemi.socloud.stepdefinitions"
-
+        tags = "@Crearservicio",
+        features = "src/test/resources/features",
+        glue = "com.grupoemi.socloud"
 )
 
 public class LoginSOCloud {
