@@ -1,5 +1,4 @@
 name: CI Pipeline - Oficina Virtual
-
 on:
   push:
     branches: [ main ]
@@ -34,8 +33,7 @@ jobs:
       - name: Re-ejecutar Escenarios Fallidos (Opcional)
         if: failure()
         run: |
-          # Necesitarías implementar primero un runner para re-ejecución
-          # ./gradlew test --tests "com.grupoemi.runners.RerunFailedScenarios"
+          # Implementar runner para re-ejecución primero
           echo "Re-ejecución de escenarios fallidos - Implementar runner primero"
 
       - name: Publicar Reporte de Cobertura JaCoCo
@@ -50,7 +48,7 @@ jobs:
           name: serenity-report
           path: target/site/serenity/
 
-      - name: Publicar Reporte JaCoCo XML (para métricas)
+      - name: Publicar Reporte JaCoCo XML
         uses: actions/upload-artifact@v4
         with:
           name: jacoco-xml-report
