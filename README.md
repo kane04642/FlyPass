@@ -6,7 +6,6 @@
 Para trabajar sobre el proyecto, se debe clonar el repositorio mediante el siguiente comando y trabajar sobre la rama
 ***master***:
 ```console
-git clone https://vsts-emi@dev.azure.com/vsts-emi/SOCloud/_git/SOCloud.Automatizacion.Web
 ```
 
 ## Estructura del Proyecto

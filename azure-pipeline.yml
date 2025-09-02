@@ -1,74 +1,57 @@
-trigger:
-  - develop
+name: CI Pipeline - Oficina Virtual
 
-pool:
-  vmImage: windows-latest
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
-stages:
-  - stage: escenarios_socloud
-    displayName: Escenarios SOCloud
-    jobs:
-      - job: ejecutar_escenarios
-        displayName: Ejecucion Escenarios
-        steps:
-          - task: JavaToolInstaller@0
-            displayName: 'install java'
-            inputs:
-              versionSpec: 17
-              jdkArchitectureOption: x64
-              jdkSourceOption: PreInstalled
-          - task: CmdLine@2
-            displayName: Limpiar Reporte
-            inputs:
-              script: |
-                gradle clearReports
-          - task: CmdLine@2
-            displayName: Ejecucion Escenarios
-            inputs:
-              script: |
-                gradle clean test jacocoTestReport aggregate -Denvironment=qa
-#          - task: CmdLine@2
-#            displayName: ReEjecucion Escenarios Fallidos
-#            condition: failed()
-#            retryCountOnTaskFailure: 2
-#            inputs:
-#  #             script: |
-#  #                gradle test --tests "com.grupoemi.runners.RerunFailedScenarios"
+jobs:
+  escenarios-oficina-virtual:
+    name: Ejecución Escenarios OV
+    runs-on: windows-latest
 
-                # Tarea para publicar los resultados de cobertura (para la pestaña "Code Coverage" en Azure DevOps)
-          - task: PublishCodeCoverageResults@2
-            displayName: 'Publicar Reporte de Cobertura de Código'
-            inputs:
-              codeCoverageTool: JaCoCo # Especifica la herramienta de cobertura
-              # Ruta al archivo XML generado por JaCoCo (necesario para que Azure DevOps lea las métricas)
-              # La ruta por defecto de JaCoCo es build/reports/jacoco/test/jacocoTestReport.xml
-              summaryFileLocation: '$(System.DefaultWorkingDirectory)/build/reports/jacoco/test/jacocoTestReport.xml'
-              # Opcional: Ruta a la carpeta del reporte HTML (Azure DevOps puede enlazar a ella)
-              reportDirectory: '$(System.DefaultWorkingDirectory)/build/reports/jacoco/test/html'
-              # Opcional: Patrón para encontrar archivos fuente (para mostrar el código con cobertura)
-              # sourceFileLocation: '$(System.DefaultWorkingDirectory)/src/main/java' # Ajusta según tu estructura de proyecto
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-                # Tarea para publicar el reporte HTML de JaCoCo como un artefacto de la build
-          - task: PublishBuildArtifacts@1
-            displayName: 'Publicar Reporte HTML de Cobertura (JaCoCo)'
-            condition: always() # Publicar siempre el reporte HTML, incluso si las pruebas fallan
-            inputs:
-              # Ruta a la carpeta del reporte HTML generado por JaCoCo
-              PathtoPublish: '$(System.DefaultWorkingDirectory)/build/reports/jacoco/test/html'
-              ArtifactName: 'Informe Cobertura Código' # Nombre del artefacto en Azure DevOps
-              publishLocation: 'Container' # Publicar en el contenedor de artefactos de la build
+      - name: Setup Java JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          architecture: x64
 
-          - task: CopyFiles@2
-            displayName: copyTargetFolder
-            condition: always()
-            inputs:
-              SourceFolder: '$(System.DefaultWorkingDirectory)/target/site/serenity'
-              Contents: '**'
-              TargetFolder: '$(build.artifactstagingdirectory)'
-          - task: PublishBuildArtifacts@1
-            displayName: publishSerenityReport
-            condition: always()
-            inputs:
-              PathtoPublish: '$(System.DefaultWorkingDirectory)/target/site/serenity'
-              ArtifactName: 'Informe Ejecución Escenarios SOCloud'
-              publishLocation: 'Container'
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Limpiar Reportes
+        run: ./gradlew clearReports
+
+      - name: Ejecutar Escenarios de Prueba
+        run: ./gradlew clean test jacocoTestReport aggregate -Denvironment=qa
+
+      - name: Re-ejecutar Escenarios Fallidos (Opcional)
+        if: failure()
+        run: |
+          # Necesitarías implementar primero un runner para re-ejecución
+          # ./gradlew test --tests "com.grupoemi.runners.RerunFailedScenarios"
+          echo "Re-ejecución de escenarios fallidos - Implementar runner primero"
+
+      - name: Publicar Reporte de Cobertura JaCoCo
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-coverage-report
+          path: build/reports/jacoco/test/html/
+
+      - name: Publicar Reporte Serenity
+        uses: actions/upload-artifact@v4
+        with:
+          name: serenity-report
+          path: target/site/serenity/
+
+      - name: Publicar Reporte JaCoCo XML (para métricas)
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-xml-report
+          path: build/reports/jacoco/test/jacocoTestReport.xml

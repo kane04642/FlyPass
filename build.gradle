@@ -82,8 +82,8 @@ test {
     finalizedBy jacocoTestReport
 }
 
-jacocoTestReport { // <--- AÑADIR ESTE BLOQUE para configurar el reporte de JaCoCo
-    dependsOn test // Asegura que las pruebas se ejecuten antes de generar el reporte
+jacocoTestReport {
+    dependsOn test
 
     reports {
         xml.required = true // Genera el reporte XML (necesario para Azure DevOps y SonarQube)
