@@ -48,5 +48,26 @@ public class ReclamosNoClientePOM extends PageObject {
     public static final Target SLC_TIPO_PROVINCIA= Target.the("Seleccionar el tipo provincia").locatedBy("//mat-option[contains(.,'{0}')]");
     public static final Target LIS_TIPO_DISTRITO= Target.the("Click en tipo de distrito").located(By.id("mat-select-8"));
     public static final Target SLC_TIPO_DISTRITO= Target.the("Seleccionar el tipo distrito").locatedBy("//mat-option[contains(.,'{0}')]");
+    public static final Target LIS_TIPO_BIEN= Target.the("Click en tipo de bien contratado").located(By.id("mat-select-0"));
+    public static final Target SLC_TIPO_BIEN= Target.the("Seleccionar el tipo de bien contratado").locatedBy("//mat-option[contains(.,'{0}')]");
+    public static final Target TXT_BIEN= Target.the("Ingresar descripciòn bien contratado").located(By.id("mat-input-0"));
+    public static final Target BTN_OSINERGMIN = Target.the("Botòn OSINERGMIN").located(By.xpath("//div[@class='12 text-center']//button[@id='ButtonClienteCalidda']"));
+    public static final Target BTN_INDECOPI = Target.the("Botòn OSINERGMIN").located(By.xpath("//div[@class='text-center col-12']//button[@id='ButtonClienteCalidda']"));
+    public static final Target LIS_MOTIVO_OSINERGMIN= Target.the("Click en motivo de reclamo OSINERGMIN").located(By.id("mat-select-14"));
+    public static final Target SLC_MOTIVO_OSINERGMIN= Target.the("Seleccionar el motivo de reclamo OSINERGMIN").locatedBy("//mat-option[contains(.,'{0}')]");
+    public static final Target LIS_SUBMOTIVO_OSINERGMIN= Target.the("Click sub-motivo de reclamo OSINERGMIN").located(By.id("mat-select-15"));
+    public static final Target SLC_SUBMOTIVO_OSINERGMIN= Target.the("Seleccionar el sub-motivo de reclamo OSINERGMIN").locatedBy("//mat-option[contains(.,'{0}')]");
+    public static final Target TXT_DESCRIPCION_RECLAMO= Target.the("Ingresar descripciòn del reclamo").located(By.id("mat-input-24"));
+    public static final Target CHK_POLI_PRIVACIDAD = Target.the("Check politica de privacidad").located(By.id("mat-slide-toggle-1"));
+    public static final Target LIS_TIPO_INCIDENCIA= Target.the("Click tipo de incidencia INDECOPI").located(By.id("mat-select-26"));
+    public static final Target SLC_TIPO_INCIDENCIA= Target.the("Seleccionar tipo de incidencia INDECOPI").locatedBy("//mat-option[contains(.,'{0}')]");
+    public static final Target LIS_MOTIVO_INDECOPI= Target.the("Click en motivo de reclamo INDECOPI").located(By.id("mat-select-27"));
+    public static final Target SLC_MOTIVO_INDECOPI= Target.the("Seleccionar el motivo de reclamo INDECOPI").locatedBy("//mat-option[contains(.,'{0}')]");
+    public static final Target LIS_SUBMOTIVO_INDECOPI= Target.the("Click en sub-motivo de reclamo INDECOPI").located(By.id("mat-select-27"));
+    public static final Target SLC_SUBMOTIVO_INDECOPI= Target.the("Seleccionar el sub-motivo de reclamo INDECOPI").locatedBy("//mat-option[contains(.,'{0}')]");
+    public static final Target TXT_petitorio = Target.the("Ingresar descripciòn petitorio ").located(By.id("mat-input-29"));
+    public static final Target BTN_GUARDAR_RECLAMO = Target.the("Botòn guardar reclamo No cliente").located(By.xpath("//button[@class='mr-3 mat-flat-button mat-button-base mat-primary']"));
+    public static final Target BTN_CONFIRMAR = Target.the("Botòn confirmar reclamo No cliente").located(By.xpath("//button[normalize-space()='Sí']"));
+    public static final Target BTN_DESCARGAR_PDF = Target.the("Botòn descargar pdf").located(By.xpath("//button[@id='btnDescargarReclamo']//span[@class='mat-button-wrapper']"));
 
 }

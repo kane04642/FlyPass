@@ -18,7 +18,6 @@ public class OpenUrlNoCliente implements Task {
 
     @Override
     public <T extends Actor> void performAs(T actor) {
-        // Leer directamente del archivo de propiedades
         String urlBase = environmentVariables.getProperty("environments.noCliente.webdriver.base.url");
 
         actor.attemptsTo(

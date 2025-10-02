@@ -6,7 +6,7 @@ import org.junit.runner.RunWith;
 
 @RunWith(CucumberWithSerenity.class)
 @CucumberOptions(
-        tags = "@ReclamoCliente",
+        tags = "@regresion",
         features = "src/test/resources/features",
         glue = "com.calidda.ov"
 )
