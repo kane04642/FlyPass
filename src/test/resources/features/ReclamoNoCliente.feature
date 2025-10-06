@@ -5,7 +5,7 @@ Característica: : Creacion de reclamo como NO cliente
   Antecedentes:
     Dado el usuario navega a la pagina autenticador
 
-  @ReclamoNoCliente @regresion
+  @ReclamoNoCliente @regresion @OV_TC45 @OV_TC65 @OV_TC66 @OV_TC129 @OV_TC67 @OV_TC68 @OV_TC69 @OV_TC74 @OV_TC73
   Esquema del escenario: : Usuario no registrado registra reclamo
     Cuando el usuario ingresa al menu de reclamos no clientes
     Cuando el usuario ingresa los datos del reclamante no cliente

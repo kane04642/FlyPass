@@ -28,13 +28,26 @@ public class ReclamosPOM extends PageObject {
     public static final Target LIS_SUB_MOTIVO= Target.the("Lista de sub-motivos").located(By.id("mat-select-3"));
     public static final Target SLC_SUB_MOTIVO= Target.the("Seleccionar sub-motivo").locatedBy("//mat-option[contains(.,'{0}')]");
     public static final Target TXT_DES_RECLAMO= Target.the("Descripciòn del reclamo").located(By.id("mat-input-0"));
-    public static final Target BTN_SIGUIENTE_MOTI= Target.the("Boton siguiente pantalla motivo reclamo").located(By.cssSelector("div[id='cdk-step-content-0-2'] button:nth-child(1)"));
+    public static final Target BTN_SIGUIENTE_MOTI= Target.the("Botòn siguiente pantalla motivo reclamo").located(By.cssSelector("div[id='cdk-step-content-0-2'] button:nth-child(1)"));
     public static final Target CHK_RECLAMO_EMAIL= Target.the("Acepto notificaciòn por correo").located(By.id("inlineRadio1"));
     public static final Target TXT_EMAIL_RECLAMO= Target.the("Ingreso email notificaciòn").located(By.cssSelector("input[placeholder='Correo para la notificación']"));
-    public static final Target BTN_EMAIL_ACEPTAR= Target.the("Boton guardar email").located(By.cssSelector("button[class='swal2-confirm swal2-styled']"));
-    public static final Target BTN_EMAIL_SERVICIO= Target.the("Boton error servicio email").located(By.cssSelector("button[class='swal2-confirm swal2-styled']"));
-    public static final Target BTN_ENVIAR_RECLAMO= Target.the("Boton enviar reclamo cliente").located(By.cssSelector("div[id='cdk-step-content-0-3'] button[class='sendBtnColor mat-flat-button mat-button-base'] span[class='mat-button-wrapper']"));
-    public static final Target BTN_ENVIAR_CONFIRMAR= Target.the("Boton confirmo reclamo cliente").located(By.cssSelector("button[class='swal2-confirm swal2-styled']"));
+    public static final Target BTN_EMAIL_ACEPTAR= Target.the("Botòn guardar email").located(By.cssSelector("button[class='swal2-confirm swal2-styled']"));
+    public static final Target BTN_EMAIL_SERVICIO= Target.the("Botòn error servicio email").located(By.cssSelector("button[class='swal2-confirm swal2-styled']"));
+    public static final Target BTN_ENVIAR_RECLAMO= Target.the("Botòn enviar reclamo cliente").located(By.cssSelector("div[id='cdk-step-content-0-3'] button[class='sendBtnColor mat-flat-button mat-button-base'] span[class='mat-button-wrapper']"));
+    public static final Target BTN_ENVIAR_CONFIRMAR= Target.the("Botòn confirmo reclamo cliente").located(By.cssSelector("button[class='swal2-confirm swal2-styled']"));
+    public static final Target MSG_MAX_CARACTERES= Target.the("Mensaje maximo caracteres").located(By.xpath("//div[normalize-space()='* Máximo de caracteres: 550']"));
+    public static final Target CHK_RECLAMO_NO_EMAIL= Target.the("No deseo notificaciòn por email").located(By.id("inlineRadio2"));
+    public static final Target BTN_SIG_NOTIFICA= Target.the("Botòn siguiente no email").located(By.xpath("//div[@id='cdk-step-content-0-3']//button[@type='button'][normalize-space()='Siguiente']"));
+    public static final Target CHK_OTRA_DIRE_NOTIFICA= Target.the("Check ingreso otra direcciòn de notificaciòn").located(By.cssSelector("label[for='mat-checkbox-2-input'] span[class='mat-checkbox-label']"));
+    public static final Target TXT_OTRA_DIRE_NOTIFICA= Target.the("Ingreso nueva direcciòn de notificaciòn").located(By.cssSelector("#mat-input-14"));
+    public static final Target LIS_OTRO_DEP_NOTIFICA= Target.the("Lista departamento notificaciòn").located(By.id("mat-select-9"));
+    public static final Target SLC_OTRO_DEP_NOTIFICA= Target.the("Seleccionar departamento notificaciòn").locatedBy("//mat-option[contains(.,'{0}')]");
+    public static final Target LIS_OTRO_PRO_NOTIFICA= Target.the("Lista provincia notificaciòn").located(By.id("mat-select-10"));
+    public static final Target SLC_OTRO_PRO_NOTIFICA= Target.the("Seleccionar provincia notificaciòn").locatedBy("//mat-option[contains(.,'{0}')]");
+    public static final Target LIS_OTRO_DIS_NOTIFICA= Target.the("Lista distrito notificaciòn").located(By.id("mat-select-11"));
+    public static final Target SLC_OTRO_DIS_NOTIFICA= Target.the("Seleccionar distrito notificaciòn").locatedBy("//mat-option[contains(.,'{0}')]");
+    public static final Target TXT_REFERENCIA_NOTIFICA= Target.the("Ingresa referencia  de notificaciòn").located(By.id("mat-input-15"));
+    public static final Target BTN_ENVIAR_NOTI= Target.the("Botòn enviar reclamo en nueva direcciòn notificaciòn").located(By.xpath("(//button[@class='sendBtnColor mat-flat-button mat-button-base'])[2]"));
 
 
 }

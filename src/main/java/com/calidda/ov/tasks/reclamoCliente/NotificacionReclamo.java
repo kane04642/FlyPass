@@ -37,9 +37,5 @@ public class NotificacionReclamo implements Task {
             );
         }
 
-        actor.attemptsTo(
-                Click.on(BTN_ENVIAR_RECLAMO),
-                Click.on(BTN_ENVIAR_CONFIRMAR)
-        );
     }
 }
