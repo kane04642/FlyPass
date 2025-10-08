@@ -37,7 +37,7 @@ public class AutenticarOV implements Task {
                 .getProperty(passwordKey);
 
         actor.attemptsTo(
-                WaitUntil.the(BTN_COOKIES, isPresent()).forNoMoreThan(15).seconds(),
+                WaitUntil.the(BTN_COOKIES, isPresent()).forNoMoreThan(25).seconds(),
                 Click.on(BTN_COOKIES),
                 Enter.keyValues(username).into(TXT_USER),
                 Enter.keyValues(password).into(TXT_CLAVE),
