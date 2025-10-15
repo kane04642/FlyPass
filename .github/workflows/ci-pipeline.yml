@@ -28,13 +28,12 @@ jobs:
         run: ./gradlew clearReports
 
       - name: Ejecutar Escenarios de Prueba
+        id: test-execution
+        continue-on-error: true  # ⬅️ ESTA ES LA CLAVE
         run: ./gradlew clean test jacocoTestReport aggregate -Denvironment=qa
 
-      - name: Re-ejecutar Escenarios Fallidos (Opcional)
-        if: failure()
-        run: |
-          # Implementar runner para re-ejecución primero
-          echo "Re-ejecución de escenarios fallidos - Implementar runner primero"
+      - name: Generar Reportes Serenity (siempre)
+        run: ./gradlew aggregate -Denvironment=qa
 
       - name: Publicar Reporte de Cobertura JaCoCo
         uses: actions/upload-artifact@v4
@@ -53,3 +52,7 @@ jobs:
         with:
           name: jacoco-xml-report
           path: build/reports/jacoco/test/jacocoTestReport.xml
+
+      - name: Fail if tests failed
+        if: steps.test-execution.outcome == 'failure'
+        run: exit 1

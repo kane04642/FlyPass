@@ -34,7 +34,7 @@ public class Login  extends PageObject {
     public static final Target BTN_CANCELAR_REGIS= Target.the("Botòn cancelar registro de usuario").located(By.xpath("//button[@class='mr-2 mat-flat-button mat-button-base mat-warn']"));
     public static final Target LNK_CANCELAR_REGISTRO= Target.the("Mensaje confirmo deseo cancelar el registro").located(By.xpath("//div[@id='swal2-content']"));
     public static final Target BTN_CAMPOS_OBLI_OK= Target.the("Botòn campos obligatorios Ok").located(By.xpath("//button[text()='OK']"));
-    public static final Target LNK_EMPRESA= Target.the("Seleccionar pestaña empresa").located(By.xpath("(//div[@id='mat-tab-label-0-1'])[1]"));
+    public static final Target LNK_EMPRESA= Target.the("Seleccionar pestaña empresa").located(By.cssSelector("#mat-tab-label-0-1"));
     public static final Target TXT_RUC= Target.the("Ingresar RUC de empresa").located(By.xpath("//input[@formcontrolname='businessRuc']"));
     public static final Target TXT_RAZON_SOCIAL= Target.the("Ingresar razòpn social de la empresa").located(By.xpath("//input[@formcontrolname='businessName']"));
     public static final Target TXT_EMAIL_EMPRESA= Target.the("Ingresar email de nueva empresa").located(By.xpath("//input[@formcontrolname='businessEmail']"));
