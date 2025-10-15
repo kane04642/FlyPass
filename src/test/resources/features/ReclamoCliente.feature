@@ -5,7 +5,7 @@ Característica: : Creacion de reclamo como cliente
   Antecedentes:
     Dado el usuario navega a la pagina autenticador
 
-  @ReclamoCliente @OV_TC64 @OV_TC46 @OV_TC49 @regresion
+  @ReclamoCliente @OV_TC64 @OV_TC46 @OV_TC49 @OV_TC95 @regresion
   Esquema del escenario: : Cliente registrado realiza reclamo
     Cuando el usuario ingresa las credenciales para autenticacion
       | actor | <actor> |
@@ -90,7 +90,7 @@ Característica: : Creacion de reclamo como cliente
       | actor   | numeroCliente | tipoRelacion | nombreRepre | apellidoRepre | tipoDocumenRepre | numeroDocumenRepre | telefonoFijoRepre | celularRepre | emailRepre          | motivo                 | submotivo                          | descripcionReclamo | email             |
       | cliente | 5195553       | Tercero      | Pepe        | Perez         | DNI              | 52454555           | 25665545          | 3221211204   | ejemplo@ejemplo.com | CONTRATO DE SUMINISTRO | INCUMPLIMIENTO CONTRATO SUMINISTRO | emailRepreemailRepreemailRepreemailRepreemailRepreemailRepreemailRepreemailRepreemailRepreemailRepre emailRepreemailRepreemailRepreemailRepreemailRepre          | correo@correo.com |
 
-  @ReclamoCliente @OV_TC48 @regresion
+  @ReclamoCliente @OV_TC48 @OV_TC44 @OV_TC45 @OV_TC46 @regresion
   Esquema del escenario: : Cliente no desea respuesta por email
     Cuando el usuario ingresa las credenciales para autenticacion
       | actor | <actor> |
@@ -118,7 +118,7 @@ Característica: : Creacion de reclamo como cliente
       | cliente | 5195553       | Tercero      | Pepe        | Perez         | DNI              | 52454555           | 25665545          | 3221211204   | ejemplo@ejemplo.com | CONTRATO DE SUMINISTRO | INCUMPLIMIENTO CONTRATO SUMINISTRO | emailRepre         | correo@correo.com |
 
 
-  @ReclamoCliente @OV_TC62 @regresion
+  @ReclamoCliente @OV_TC62 @OV_TC60 @regresion
   Esquema del escenario: Validar check ingresar otra dirección de notificaciòn
     Cuando el usuario ingresa las credenciales para autenticacion
       | actor | <actor> |

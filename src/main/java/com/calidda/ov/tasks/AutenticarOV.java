@@ -1,5 +1,6 @@
 package com.calidda.ov.tasks;
 
+import com.calidda.ov.interactions.Esperar;
 import net.serenitybdd.core.Serenity;
 import net.serenitybdd.model.environment.EnvironmentSpecificConfiguration;
 import net.serenitybdd.screenplay.Actor;
@@ -41,7 +42,8 @@ public class AutenticarOV implements Task {
                 Click.on(BTN_COOKIES),
                 Enter.keyValues(username).into(TXT_USER),
                 Enter.keyValues(password).into(TXT_CLAVE),
-                Click.on(BTN_INICIAR_SESION)/*,
+                Click.on(BTN_INICIAR_SESION),
+                Esperar.unTiempo(15)/*,
                 WaitUntil.the(BTN_ACTUALIZAR, isPresent()).forNoMoreThan(40).seconds(),
                 Click.on(BTN_ACTUALIZAR),
                 Scroll.to(TXT_NUMERO),

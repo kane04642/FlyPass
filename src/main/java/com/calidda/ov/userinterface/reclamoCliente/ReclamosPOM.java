@@ -23,11 +23,17 @@ public class ReclamosPOM extends PageObject {
     public static final Target TXT_CELU_REPRE= Target.the("Numero celular representante legal").located(By.id("mat-input-11"));
     public static final Target TXT_EMAIL_REPRE= Target.the("Email del representante legal").located(By.id("mat-input-12"));
     public static final Target BTN_SIGUIENTE_REPRE= Target.the("Boton siguiente pantalla representante legal").located(By.xpath("//div[@id='cdk-step-content-0-1']//button[@type='button'][normalize-space()='Siguiente']"));
-    public static final Target LIS_MOTIVO= Target.the("Lista de motivos").located(By.id("mat-select-2"));
+    //public static final Target LIS_MOTIVO= Target.the("Lista de motivos").located(By.id("mat-select-20"));
+    public static final Target LIS_MOTIVO = Target.the("Lista de motivos")
+            .located(By.cssSelector("mat-select[formcontrolname='reason']"));
     public static final Target SLC_MOTIVO= Target.the("Dar click en motivo").locatedBy("//mat-option[contains(.,'{0}')]");
-    public static final Target LIS_SUB_MOTIVO= Target.the("Lista de sub-motivos").located(By.id("mat-select-3"));
+    //public static final Target LIS_SUB_MOTIVO= Target.the("Lista de sub-motivos").located(By.id("mat-select-21"));
+    public static final Target LIS_SUB_MOTIVO = Target.the("Lista de sub-motivos")
+            .located(By.cssSelector("mat-select[formcontrolname='subReason']"));
     public static final Target SLC_SUB_MOTIVO= Target.the("Seleccionar sub-motivo").locatedBy("//mat-option[contains(.,'{0}')]");
-    public static final Target TXT_DES_RECLAMO= Target.the("Descripciòn del reclamo").located(By.id("mat-input-0"));
+    public static final Target TXT_DES_RECLAMO = Target.the("Descripciòn")
+            .located(By.cssSelector("textarea[formcontrolname='description']"));
+    //public static final Target TXT_DES_RECLAMO= Target.the("Descripciòn del reclamo").located(By.id("mat-input-24"));
     public static final Target BTN_SIGUIENTE_MOTI= Target.the("Botòn siguiente pantalla motivo reclamo").located(By.cssSelector("div[id='cdk-step-content-0-2'] button:nth-child(1)"));
     public static final Target CHK_RECLAMO_EMAIL= Target.the("Acepto notificaciòn por correo").located(By.id("inlineRadio1"));
     public static final Target TXT_EMAIL_RECLAMO= Target.the("Ingreso email notificaciòn").located(By.cssSelector("input[placeholder='Correo para la notificación']"));
