@@ -1,4 +1,4 @@
-name: CI Pipeline - Oficina Virtual
+name: CI Pipeline - Oficia Virtual
 on:
   push:
     branches: [ main ]
@@ -29,11 +29,30 @@ jobs:
 
       - name: Ejecutar Escenarios de Prueba
         id: test-execution
-        continue-on-error: true  # ⬅️ ESTA ES LA CLAVE
+        continue-on-error: true
         run: ./gradlew clean test jacocoTestReport aggregate -Denvironment=qa
 
       - name: Generar Reportes Serenity (siempre)
         run: ./gradlew aggregate -Denvironment=qa
+
+      # === NUEVO: Publicar en Azure Storage ===
+      - name: Setup Azure CLI
+        uses: azure/setup-az@v1
+        with:
+          version: '2.60.0'
+
+      - name: Publicar Reportes a Azure Storage
+        env:
+          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
+          AZURE_STORAGE_SAS_TOKEN: ${{ secrets.AZURE_SAS_TOKEN }}
+        run: |
+          az storage blob upload-batch \
+            --account-name $AZURE_STORAGE_ACCOUNT \
+            --sas-token "$AZURE_STORAGE_SAS_TOKEN" \
+            --source "target/site/serenity" \
+            --destination '$web' \
+            --overwrite
+      # === FIN NUEVO ===
 
       - name: Publicar Reporte de Cobertura JaCoCo
         uses: actions/upload-artifact@v4
