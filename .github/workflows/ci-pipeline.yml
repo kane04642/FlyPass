@@ -53,6 +53,16 @@ jobs:
           az --version
           echo "✅ Azure CLI instalado correctamente"
 
+      - name: Verificar reportes generados
+        run: |
+          if (Test-Path "target/site/serenity/index.html") {
+            echo "✅ Reportes de Serenity generados correctamente"
+            Get-ChildItem "target/site/serenity" | Select-Object Name, Length | Format-Table
+          } else {
+            echo "❌ No se encontraron reportes de Serenity"
+            exit 1
+          }
+
       - name: Publicar Reportes a Azure Storage
         env:
           AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
