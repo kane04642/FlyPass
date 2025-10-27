@@ -35,7 +35,7 @@ jobs:
       - name: Generar Reportes Serenity (siempre)
         run: ./gradlew aggregate -Denvironment=qa
 
-      # === OPCIÓN 1: Instalar Azure CLI manualmente ===
+      # === OPCIÓN CORREGIDA: Instalar Azure CLI manualmente ===
       - name: Instalar Azure CLI
         run: |
           # Descargar e instalar Azure CLI
@@ -68,14 +68,18 @@ jobs:
           AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
           AZURE_SAS_TOKEN: ${{ secrets.AZURE_SAS_TOKEN }}
         run: |
+          # Escapar el SAS Token correctamente para PowerShell
+          $escapedSasToken = "$env:AZURE_SAS_TOKEN" -replace '&','`&'
+          Write-Host "Subiendo reportes a Azure Storage..."
           az storage blob upload-batch `
             --account-name $env:AZURE_STORAGE_ACCOUNT `
-            --sas-token "$env:AZURE_SAS_TOKEN" `
+            --sas-token "$escapedSasToken" `
             --source "target/site/serenity" `
             --destination '$web' `
             --overwrite
+          Write-Host "✅ Reportes subidos exitosamente"
         shell: powershell
-      # === FIN OPCIÓN 1 ===
+      # === FIN OPCIÓN CORREGIDA ===
 
       - name: Publicar Reporte de Cobertura JaCoCo
         uses: actions/upload-artifact@v4
