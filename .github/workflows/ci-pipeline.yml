@@ -60,7 +60,7 @@ jobs:
           $storageAccount = "$env:AZURE_STORAGE_ACCOUNT"
           $sasToken = "$env:AZURE_SAS_TOKEN"
           $sourcePath = "target/site/serenity"
-          $containerName = "\$web"
+          $containerName = '$web'
           
           Write-Host "Conectando a Azure Storage: $storageAccount"
           
