@@ -123,20 +123,28 @@ jobs:
           $htmlContent | Out-File -FilePath $indexFile -Encoding UTF8
           Write-Host "✅ Index.html generado correctamente en: $indexFile"
 
-      - name: Subir reportes a Azure Storage con Azure CLI
-        env:
-          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
-          AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
+      - name: Verificar configuración de Azure
         run: |
-          Write-Host "🔐 Conectando a Azure Storage: $env:AZURE_STORAGE_ACCOUNT"
+          Write-Host "🔍 Verificando configuración de Azure..."
+          Write-Host "Storage Account: ${{ secrets.AZURE_STORAGE_ACCOUNT }}"
+          if ([string]::IsNullOrEmpty('${{ secrets.AZURE_STORAGE_KEY }}')) {
+            Write-Host "❌ ERROR: AZURE_STORAGE_KEY no está configurado"
+            exit 1
+          } else {
+            Write-Host "✅ AZURE_STORAGE_KEY está configurado"
+          }
+
+      - name: Subir reportes a Azure Storage con Azure CLI
+        run: |
+          Write-Host "🔐 Conectando a Azure Storage: ${{ secrets.AZURE_STORAGE_ACCOUNT }}"
           
           # Subir todos los archivos usando upload-batch
           az storage blob upload-batch `
-            --account-name $env:AZURE_STORAGE_ACCOUNT `
+            --account-name "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
             --destination '$web' `
             --source ./reportes `
             --auth-mode key `
-            --account-key $env:AZURE_STORAGE_KEY `
+            --account-key "${{ secrets.AZURE_STORAGE_KEY }}" `
             --overwrite
           
           if ($LASTEXITCODE -eq 0) {
