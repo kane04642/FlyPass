@@ -58,70 +58,154 @@ jobs:
           # Copiar todo el contenido de serenity al directorio reportes
           Copy-Item -Path "target/site/serenity/*" -Destination "./reportes/" -Recurse -Force
 
-      - name: Generar index.html con enlaces a reportes
+      - name: Generar portal de reportes (index principal)
         run: |
           $reportPath = "./reportes"
-          $indexFile = "$reportPath/index.html"
+          $portalFile = "$reportPath/portal-reportes.html"
           
-          # Crear contenido HTML básico
+          # Crear contenido HTML del portal
           $htmlContent = @"
           <!DOCTYPE html>
           <html lang="es">
           <head>
               <meta charset="UTF-8">
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Reportes de Pruebas - Oficina Virtual</title>
+              <title>Portal de Reportes - Oficina Virtual</title>
               <style>
-                  body { font-family: Arial, sans-serif; margin: 40px; background-color: #f5f5f5; }
-                  .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-                  h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
-                  .report-list { list-style: none; padding: 0; }
-                  .report-item { margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 5px; border-left: 4px solid #3498db; }
-                  .report-item a { text-decoration: none; color: #2c3e50; font-weight: bold; font-size: 16px; }
-                  .report-item a:hover { color: #3498db; }
-                  .timestamp { color: #7f8c8d; font-size: 14px; margin-top: 5px; }
-                  .success { border-left-color: #27ae60; }
-                  .info { border-left-color: #3498db; }
+                  body { 
+                      font-family: 'Segoe UI', Arial, sans-serif; 
+                      margin: 0; 
+                      padding: 0; 
+                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                      min-height: 100vh;
+                  }
+                  .container { 
+                      max-width: 1200px; 
+                      margin: 0 auto; 
+                      padding: 40px 20px;
+                  }
+                  .header {
+                      text-align: center;
+                      color: white;
+                      margin-bottom: 40px;
+                  }
+                  .header h1 {
+                      font-size: 2.5em;
+                      margin-bottom: 10px;
+                      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                  }
+                  .header p {
+                      font-size: 1.2em;
+                      opacity: 0.9;
+                  }
+                  .cards-container {
+                      display: grid;
+                      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+                      gap: 20px;
+                      margin-top: 30px;
+                  }
+                  .card {
+                      background: white;
+                      border-radius: 15px;
+                      padding: 30px;
+                      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                      transition: transform 0.3s ease, box-shadow 0.3s ease;
+                      border-left: 5px solid #3498db;
+                  }
+                  .card:hover {
+                      transform: translateY(-5px);
+                      box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+                  }
+                  .card h3 {
+                      color: #2c3e50;
+                      margin-top: 0;
+                      font-size: 1.4em;
+                  }
+                  .card p {
+                      color: #7f8c8d;
+                      line-height: 1.6;
+                  }
+                  .btn {
+                      display: inline-block;
+                      background: #3498db;
+                      color: white;
+                      padding: 12px 25px;
+                      text-decoration: none;
+                      border-radius: 25px;
+                      font-weight: bold;
+                      transition: background 0.3s ease;
+                      margin-top: 15px;
+                  }
+                  .btn:hover {
+                      background: #2980b9;
+                  }
+                  .btn-success {
+                      background: #27ae60;
+                  }
+                  .btn-success:hover {
+                      background: #219653;
+                  }
+                  .timestamp {
+                      text-align: center;
+                      color: white;
+                      margin-top: 40px;
+                      opacity: 0.8;
+                  }
+                  .card-content {
+                      min-height: 120px;
+                  }
               </style>
           </head>
           <body>
               <div class="container">
-                  <h1>📊 Reportes de Pruebas Automatizadas</h1>
-                  <p>Reportes generados automáticamente por el pipeline de CI/CD</p>
+                  <div class="header">
+                      <h1>🚀 Portal de Reportes de Pruebas</h1>
+                      <p>Reportes generados automáticamente por el pipeline de CI/CD</p>
+                  </div>
           
-                  <ul class="report-list">
-          "@
+                  <div class="cards-container">
+                      <div class="card">
+                          <div class="card-content">
+                              <h3>📊 Reporte Principal Serenity</h3>
+                              <p>Reporte detallado de las pruebas automatizadas con Serenity BDD. Incluye resultados, evidencias y métricas de las pruebas ejecutadas.</p>
+                          </div>
+                          <a href="index.html" class="btn btn-success" target="_blank">Abrir Reporte Completo</a>
+                      </div>
           
-          # Agregar archivos principales
-          $mainFiles = @(
-              @{Name = "Reporte Principal Serenity"; File = "index.html"; Class = "success"},
-              @{Name = "Cobertura de Código"; File = "jacoco/index.html"; Class = "info"},
-              @{Name = "Resumen de Pruebas"; File = "summary.html"; Class = "info"}
-          )
+                      <div class="card">
+                          <div class="card-content">
+                              <h3>📈 Cobertura de Código</h3>
+                              <p>Reporte de cobertura de código generado por JaCoCo. Muestra el porcentaje de código cubierto por las pruebas automatizadas.</p>
+                          </div>
+                          <a href="jacoco/index.html" class="btn" target="_blank">Ver Cobertura</a>
+                      </div>
           
-          foreach ($file in $mainFiles) {
-              if (Test-Path "$reportPath/$($file.File)") {
-                  $htmlContent += @"
-                  <li class="report-item $($file.Class)">
-                      <a href="$($file.File)" target="_blank">$($file.Name)</a>
-                      <div class="timestamp">Archivo: $($file.File)</div>
-                  </li>
-          "@
-              }
-          }
+                      <div class="card">
+                          <div class="card-content">
+                              <h3>📋 Resumen Ejecutivo</h3>
+                              <p>Resumen general de la ejecución de pruebas con estadísticas, duración y resultados agrupados por características.</p>
+                          </div>
+                          <a href="summary.html" class="btn" target="_blank">Ver Resumen</a>
+                      </div>
+                  </div>
           
-          # Cerrar HTML
-          $htmlContent += @"
-                  </ul>
-                  <div class="timestamp">Generado el: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')</div>
+                  <div class="timestamp">
+                      <p>Generado el: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')</p>
+                  </div>
               </div>
           </body>
           </html>
           "@
           
-          # Escribir el archivo index.html
-          $htmlContent | Out-File -FilePath $indexFile -Encoding UTF8
-          Write-Host "✅ Index.html generado correctamente en: $indexFile"
+          # Escribir el archivo portal
+          $htmlContent | Out-File -FilePath $portalFile -Encoding UTF8
+          Write-Host "✅ Portal de reportes generado correctamente en: $portalFile"
+
+      - name: Renombrar archivos para evitar conflictos
+        run: |
+          # Renombrar el portal a index.html (reemplaza el original)
+          Move-Item -Path "./reportes/portal-reportes.html" -Destination "./reportes/index.html" -Force
+          Write-Host "✅ Archivo index.html principal configurado"
 
       - name: Verificar configuración de Azure
         run: |
@@ -175,8 +259,9 @@ jobs:
       - name: Mostrar URL de reportes
         run: |
           $storageAccount = "${{ secrets.AZURE_STORAGE_ACCOUNT }}"
-          echo "📊 Reportes publicados en: https://$storageAccount.z6.web.core.windows.net/"
-          echo "📋 Reporte principal: https://$storageAccount.z6.web.core.windows.net/index.html"
+          echo "📊 Portal de Reportes: https://$storageAccount.z6.web.core.windows.net/"
+          echo "🔗 Reporte Serenity: https://$storageAccount.z6.web.core.windows.net/index.html"
+          echo "📈 Cobertura JaCoCo: https://$storageAccount.z6.web.core.windows.net/jacoco/index.html"
           echo "🕐 Publicado en: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
 
       - name: Fail if tests failed
