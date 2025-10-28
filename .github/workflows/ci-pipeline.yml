@@ -51,17 +51,36 @@ jobs:
           Start-Process msiexec.exe -Wait -ArgumentList '/I AzureCLI.msi /quiet'
           Remove-Item AzureCLI.msi
 
-      - name: Configurar directorio de reportes
+      - name: Configurar estructura de reportes
         run: |
-          # Crear directorio para reportes
+          # Crear directorio principal para reportes
           New-Item -ItemType Directory -Path "./reportes" -Force
-          # Copiar todo el contenido de serenity al directorio reportes
-          Copy-Item -Path "target/site/serenity/*" -Destination "./reportes/" -Recurse -Force
+          
+          # Copiar reporte de Serenity a una subcarpeta
+          New-Item -ItemType Directory -Path "./reportes/serenity" -Force
+          Copy-Item -Path "target/site/serenity/*" -Destination "./reportes/serenity/" -Recurse -Force
+          
+          # Copiar reporte de JaCoCo a una subcarpeta
+          New-Item -ItemType Directory -Path "./reportes/jacoco" -Force
+          Copy-Item -Path "build/reports/jacoco/test/html/*" -Destination "./reportes/jacoco/" -Recurse -Force
+          
+          Write-Host "✅ Estructura de reportes creada:"
+          Get-ChildItem "./reportes" -Recurse | Select-Object FullName | Format-Table
 
       - name: Generar portal de reportes (index principal)
         run: |
           $reportPath = "./reportes"
-          $portalFile = "$reportPath/portal-reportes.html"
+          $portalFile = "$reportPath/index.html"
+          
+          # Verificar que los archivos destino existen
+          Write-Host "🔍 Verificando existencia de archivos..."
+          $serenityIndex = Test-Path "$reportPath/serenity/index.html"
+          $jacocoIndex = Test-Path "$reportPath/jacoco/index.html"
+          $serenitySummary = Test-Path "$reportPath/serenity/summary.html"
+          
+          Write-Host "Serenity index.html: $serenityIndex"
+          Write-Host "JaCoCo index.html: $jacocoIndex"
+          Write-Host "Serenity summary.html: $serenitySummary"
           
           # Crear contenido HTML del portal
           $htmlContent = @"
@@ -145,6 +164,12 @@ jobs:
                   .btn-success:hover {
                       background: #219653;
                   }
+                  .btn-warning {
+                      background: #f39c12;
+                  }
+                  .btn-warning:hover {
+                      background: #e67e22;
+                  }
                   .timestamp {
                       text-align: center;
                       color: white;
@@ -153,6 +178,16 @@ jobs:
                   }
                   .card-content {
                       min-height: 120px;
+                  }
+                  .file-status {
+                      font-size: 0.9em;
+                      margin-top: 10px;
+                  }
+                  .status-ok {
+                      color: #27ae60;
+                  }
+                  .status-missing {
+                      color: #e74c3c;
                   }
               </style>
           </head>
@@ -168,24 +203,60 @@ jobs:
                           <div class="card-content">
                               <h3>📊 Reporte Principal Serenity</h3>
                               <p>Reporte detallado de las pruebas automatizadas con Serenity BDD. Incluye resultados, evidencias y métricas de las pruebas ejecutadas.</p>
+                              <div class="file-status">
+          "@
+          
+          # Agregar estado del archivo Serenity
+          if (Test-Path "$reportPath/serenity/index.html") {
+              $htmlContent += '<span class="status-ok">✅ Archivo disponible</span>'
+          } else {
+              $htmlContent += '<span class="status-missing">❌ Archivo no encontrado</span>'
+          }
+          
+          $htmlContent += @"
+                              </div>
                           </div>
-                          <a href="index.html" class="btn btn-success" target="_blank">Abrir Reporte Completo</a>
+                          <a href="serenity/index.html" class="btn btn-success" target="_blank">Abrir Reporte Completo</a>
                       </div>
           
                       <div class="card">
                           <div class="card-content">
                               <h3>📈 Cobertura de Código</h3>
                               <p>Reporte de cobertura de código generado por JaCoCo. Muestra el porcentaje de código cubierto por las pruebas automatizadas.</p>
+                              <div class="file-status">
+          "@
+          
+          # Agregar estado del archivo JaCoCo
+          if (Test-Path "$reportPath/jacoco/index.html") {
+              $htmlContent += '<span class="status-ok">✅ Archivo disponible</span>'
+          } else {
+              $htmlContent += '<span class="status-missing">❌ Archivo no encontrado</span>'
+          }
+          
+          $htmlContent += @"
+                              </div>
                           </div>
-                          <a href="jacoco/index.html" class="btn" target="_blank">Ver Cobertura</a>
+                          <a href="jacoco/index.html" class="btn btn-warning" target="_blank">Ver Cobertura</a>
                       </div>
           
                       <div class="card">
                           <div class="card-content">
                               <h3>📋 Resumen Ejecutivo</h3>
                               <p>Resumen general de la ejecución de pruebas con estadísticas, duración y resultados agrupados por características.</p>
+                              <div class="file-status">
+          "@
+          
+          # Agregar estado del archivo Summary
+          if (Test-Path "$reportPath/serenity/summary.html") {
+              $htmlContent += '<span class="status-ok">✅ Archivo disponible</span>'
+          } else {
+              $htmlContent += '<span class="status-missing">❌ Archivo no encontrado</span>'
+          }
+          
+          $htmlContent += @"
+                              </div>
                           </div>
-                          <a href="summary.html" class="btn" target="_blank">Ver Resumen</a>
+                          <a href="serenity/summary.html" class="btn" target="_blank">Ver Resumen</a>
                       </div>
                   </div>
           
@@ -193,6 +264,29 @@ jobs:
                       <p>Generado el: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')</p>
                   </div>
               </div>
+          
+              <script>
+                  // Verificar enlaces y mostrar alertas si no existen
+                  document.addEventListener('DOMContentLoaded', function() {
+                      const links = document.querySelectorAll('a[target="_blank"]');
+                      links.forEach(link => {
+                          link.addEventListener('click', function(e) {
+                              const href = this.getAttribute('href');
+                              fetch(href, { method: 'HEAD' })
+                                  .then(response => {
+                                      if (!response.ok) {
+                                          e.preventDefault();
+                                          alert('El archivo ' + href + ' no está disponible. Puede que no se haya generado correctamente.');
+                                      }
+                                  })
+                                  .catch(() => {
+                                      e.preventDefault();
+                                      alert('El archivo ' + href + ' no está disponible. Puede que no se haya generado correctamente.');
+                                  });
+                          });
+                      });
+                  });
+              </script>
           </body>
           </html>
           "@
@@ -201,11 +295,25 @@ jobs:
           $htmlContent | Out-File -FilePath $portalFile -Encoding UTF8
           Write-Host "✅ Portal de reportes generado correctamente en: $portalFile"
 
-      - name: Renombrar archivos para evitar conflictos
+      - name: Verificar estructura final
         run: |
-          # Renombrar el portal a index.html (reemplaza el original)
-          Move-Item -Path "./reportes/portal-reportes.html" -Destination "./reportes/index.html" -Force
-          Write-Host "✅ Archivo index.html principal configurado"
+          Write-Host "📁 Estructura final de reportes:"
+          Get-ChildItem "./reportes" -Recurse | Select-Object FullName | Format-Table
+          
+          Write-Host "🔍 Verificando archivos críticos:"
+          $criticalFiles = @(
+              "./reportes/index.html",
+              "./reportes/serenity/index.html", 
+              "./reportes/jacoco/index.html"
+          )
+          
+          foreach ($file in $criticalFiles) {
+              if (Test-Path $file) {
+                  Write-Host "✅ $file" -ForegroundColor Green
+              } else {
+                  Write-Host "❌ $file - NO ENCONTRADO" -ForegroundColor Red
+              }
+          }
 
       - name: Verificar configuración de Azure
         run: |
@@ -260,8 +368,9 @@ jobs:
         run: |
           $storageAccount = "${{ secrets.AZURE_STORAGE_ACCOUNT }}"
           echo "📊 Portal de Reportes: https://$storageAccount.z6.web.core.windows.net/"
-          echo "🔗 Reporte Serenity: https://$storageAccount.z6.web.core.windows.net/index.html"
+          echo "🔗 Reporte Serenity: https://$storageAccount.z6.web.core.windows.net/serenity/index.html"
           echo "📈 Cobertura JaCoCo: https://$storageAccount.z6.web.core.windows.net/jacoco/index.html"
+          echo "📋 Resumen Ejecutivo: https://$storageAccount.z6.web.core.windows.net/serenity/summary.html"
           echo "🕐 Publicado en: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
 
       - name: Fail if tests failed
