@@ -11,7 +11,11 @@ Write-Host "Carpeta: $BuildFolder"
 
 # Generar portal principal
 Write-Host "Generando portal principal..."
-$portalContent = @'
+
+$fecha = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+
+# Construir el HTML en partes para evitar problemas de here-string
+$htmlPart1 = @'
 <!DOCTYPE html>
 <html>
 <head>
@@ -30,19 +34,30 @@ $portalContent = @'
     <div class="container">
         <h1>Reportes de Pruebas Automatizadas</h1>
         <p><strong>Build:</strong>
-'@ + $BuildName + @'</p>
+'@
+
+$htmlPart2 = @'</p>
         <p><strong>Fecha:</strong>
-'@ + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') + @'</p>
+'@
+
+$htmlPart3 = @'</p>
         <div>
             <a href="
-'@ + $BuildFolder + @'/serenity/index.html" class="btn btn-success">Reporte Serenity</a>
+'@
+
+$htmlPart4 = @'/serenity/index.html" class="btn btn-success">Reporte Serenity</a>
             <a href="
-'@ + $BuildFolder + @'/jacoco/index.html" class="btn btn-warning">Reporte JaCoCo</a>
+'@
+
+$htmlPart5 = @'/jacoco/index.html" class="btn btn-warning">Reporte JaCoCo</a>
         </div>
     </div>
 </body>
 </html>
 '@
+
+# Combinar todas las partes
+$portalContent = $htmlPart1 + $BuildName + $htmlPart2 + $fecha + $htmlPart3 + $BuildFolder + $htmlPart4 + $BuildFolder + $htmlPart5
 
 $portalContent | Out-File -FilePath "./index.html" -Encoding UTF8
 Write-Host "Portal generado"
