@@ -37,6 +37,7 @@ jobs:
 
       - name: Instalar Azure CLI
         run: |
+          Write-Host "Instalando Azure CLI..."
           Invoke-WebRequest -Uri https://aka.ms/installazurecliwindows -OutFile AzureCLI.msi
           Start-Process msiexec.exe -Wait -ArgumentList '/I AzureCLI.msi /quiet'
           Remove-Item AzureCLI.msi
@@ -49,29 +50,35 @@ jobs:
           $buildName = "OficinaVirtual-$fecha-$commitShort"
           echo "BUILD_NAME=$buildName" >> $env:GITHUB_ENV
           echo "BUILD_FOLDER=build-$buildName" >> $env:GITHUB_ENV
+          Write-Host "Build generado: $buildName"
 
       - name: Preparar estructura de reportes
         run: |
+          Write-Host "Preparando estructura de reportes..."
+          
+          # Crear directorios
           New-Item -ItemType Directory -Path "./$env:BUILD_FOLDER" -Force
           New-Item -ItemType Directory -Path "./$env:BUILD_FOLDER/serenity" -Force
           New-Item -ItemType Directory -Path "./$env:BUILD_FOLDER/jacoco" -Force
           
+          # Copiar reportes
+          Write-Host "Copiando reportes de Serenity..."
           Copy-Item -Path "target/site/serenity/*" -Destination "./$env:BUILD_FOLDER/serenity/" -Recurse -Force
           
+          Write-Host "Copiando reportes de JaCoCo..."
           if (Test-Path "build/reports/jacoco/test/html") {
               Copy-Item -Path "build/reports/jacoco/test/html/*" -Destination "./$env:BUILD_FOLDER/jacoco/" -Recurse -Force
+          } else {
+              Write-Host "JaCoCo no disponible, continuando..."
           }
 
       - name: Desplegar reportes a Azure
         run: |
-          ./.github/scripts/deploy-reports.ps1 -BuildName "$env:BUILD_NAME" -BuildFolder "$env:BUILD_FOLDER" -StorageAccount "${{ secrets.AZURE_STORAGE_ACCOUNT }}" -StorageKey "${{ secrets.AZURE_STORAGE_KEY }}"
-
-      - name: Mostrar URLs finales
-        run: |
-          $storageAccount = "${{ secrets.AZURE_STORAGE_ACCOUNT }}"
-          echo "URL Principal: https://$storageAccount.z6.web.core.windows.net/"
-          echo "Reporte Serenity: https://$storageAccount.z6.web.core.windows.net/$env:BUILD_FOLDER/serenity/index.html"
-          echo "Reporte JaCoCo: https://$storageAccount.z6.web.core.windows.net/$env:BUILD_FOLDER/jacoco/index.html"
+          ./.github/scripts/deploy-reports.ps1 `
+            -BuildName "$env:BUILD_NAME" `
+            -BuildFolder "$env:BUILD_FOLDER" `
+            -StorageAccount "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
+            -StorageKey "${{ secrets.AZURE_STORAGE_KEY }}"
 
       - name: Publicar artifacts en GitHub
         uses: actions/upload-artifact@v4
