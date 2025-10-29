@@ -39,7 +39,6 @@ jobs:
         run: |
           if (Test-Path "target/site/serenity/index.html") {
             echo "✅ Reportes de Serenity generados correctamente"
-            Get-ChildItem "target/site/serenity" | Select-Object Name, Length | Format-Table
           } else {
             echo "❌ No se encontraron reportes de Serenity"
             exit 1
@@ -51,45 +50,38 @@ jobs:
           Start-Process msiexec.exe -Wait -ArgumentList '/I AzureCLI.msi /quiet'
           Remove-Item AzureCLI.msi
 
-      - name: Configurar estructura de reportes
+      - name: Generar ID único de build
+        id: build-id
         run: |
-          # Crear directorio principal para reportes
-          New-Item -ItemType Directory -Path "./reportes" -Force
-          
-          # Copiar reporte de Serenity a una subcarpeta
-          New-Item -ItemType Directory -Path "./reportes/serenity" -Force
-          Copy-Item -Path "target/site/serenity/*" -Destination "./reportes/serenity/" -Recurse -Force
-          
-          # Copiar reporte de JaCoCo a una subcarpeta
-          New-Item -ItemType Directory -Path "./reportes/jacoco" -Force
-          Copy-Item -Path "build/reports/jacoco/test/html/*" -Destination "./reportes/jacoco/" -Recurse -Force
-          
-          Write-Host "✅ Estructura de reportes creada:"
-          Get-ChildItem "./reportes" -Recurse | Select-Object FullName | Format-Table
+          $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+          $commitShort = "${{ github.sha }}".Substring(0,7)
+          $buildId = "${timestamp}-${commitShort}"
+          echo "BUILD_ID=$buildId" >> $env:GITHUB_ENV
+          echo "Build ID: $buildId"
 
-      - name: Generar portal de reportes (index principal)
+      - name: Preparar estructura con historial
         run: |
-          $reportPath = "./reportes"
-          $portalFile = "$reportPath/index.html"
+          # Crear carpeta para esta build específica
+          $buildDir = "build-$env:BUILD_ID"
+          New-Item -ItemType Directory -Path "./$buildDir" -Force
+          New-Item -ItemType Directory -Path "./$buildDir/serenity" -Force
+          New-Item -ItemType Directory -Path "./$buildDir/jacoco" -Force
           
-          # Verificar que los archivos destino existen
-          Write-Host "🔍 Verificando existencia de archivos..."
-          $serenityIndex = Test-Path "$reportPath/serenity/index.html"
-          $jacocoIndex = Test-Path "$reportPath/jacoco/index.html"
-          $serenitySummary = Test-Path "$reportPath/serenity/summary.html"
+          # Copiar reportes a la carpeta de build
+          Copy-Item -Path "target/site/serenity/*" -Destination "./$buildDir/serenity/" -Recurse -Force
+          Copy-Item -Path "build/reports/jacoco/test/html/*" -Destination "./$buildDir/jacoco/" -Recurse -Force
           
-          Write-Host "Serenity index.html: $serenityIndex"
-          Write-Host "JaCoCo index.html: $jacocoIndex"
-          Write-Host "Serenity summary.html: $serenitySummary"
-          
-          # Crear contenido HTML del portal
-          $htmlContent = @"
+          Write-Host "✅ Estructura preparada para: $buildDir"
+
+      - name: Generar portal principal con historial
+        run: |
+          $portalContent = @"
           <!DOCTYPE html>
           <html lang="es">
           <head>
               <meta charset="UTF-8">
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Portal de Reportes - Oficina Virtual</title>
+              <title>Portal de Reportes - Historial</title>
               <style>
                   body { 
                       font-family: 'Segoe UI', Arial, sans-serif; 
@@ -99,7 +91,7 @@ jobs:
                       min-height: 100vh;
                   }
                   .container { 
-                      max-width: 1200px; 
+                      max-width: 1000px; 
                       margin: 0 auto; 
                       padding: 40px 20px;
                   }
@@ -108,41 +100,13 @@ jobs:
                       color: white;
                       margin-bottom: 40px;
                   }
-                  .header h1 {
-                      font-size: 2.5em;
-                      margin-bottom: 10px;
-                      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-                  }
-                  .header p {
-                      font-size: 1.2em;
-                      opacity: 0.9;
-                  }
-                  .cards-container {
-                      display: grid;
-                      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-                      gap: 20px;
-                      margin-top: 30px;
-                  }
-                  .card {
+                  .current-build {
                       background: white;
                       border-radius: 15px;
                       padding: 30px;
+                      margin-bottom: 30px;
                       box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-                      transition: transform 0.3s ease, box-shadow 0.3s ease;
-                      border-left: 5px solid #3498db;
-                  }
-                  .card:hover {
-                      transform: translateY(-5px);
-                      box-shadow: 0 15px 40px rgba(0,0,0,0.3);
-                  }
-                  .card h3 {
-                      color: #2c3e50;
-                      margin-top: 0;
-                      font-size: 1.4em;
-                  }
-                  .card p {
-                      color: #7f8c8d;
-                      line-height: 1.6;
+                      border-left: 5px solid #27ae60;
                   }
                   .btn {
                       display: inline-block;
@@ -152,226 +116,80 @@ jobs:
                       text-decoration: none;
                       border-radius: 25px;
                       font-weight: bold;
-                      transition: background 0.3s ease;
-                      margin-top: 15px;
-                  }
-                  .btn:hover {
-                      background: #2980b9;
+                      margin: 5px;
                   }
                   .btn-success {
                       background: #27ae60;
                   }
-                  .btn-success:hover {
-                      background: #219653;
-                  }
-                  .btn-warning {
-                      background: #f39c12;
-                  }
-                  .btn-warning:hover {
-                      background: #e67e22;
-                  }
-                  .timestamp {
-                      text-align: center;
-                      color: white;
-                      margin-top: 40px;
-                      opacity: 0.8;
-                  }
-                  .card-content {
-                      min-height: 120px;
-                  }
-                  .file-status {
-                      font-size: 0.9em;
+                  .build-info {
+                      color: #7f8c8d;
                       margin-top: 10px;
-                  }
-                  .status-ok {
-                      color: #27ae60;
-                  }
-                  .status-missing {
-                      color: #e74c3c;
                   }
               </style>
           </head>
           <body>
               <div class="container">
                   <div class="header">
-                      <h1>🚀 Portal de Reportes de Pruebas</h1>
-                      <p>Reportes generados automáticamente por el pipeline de CI/CD</p>
+                      <h1>🚀 Historial de Reportes de Pruebas</h1>
+                      <p>Ejecuciones automatizadas - Oficina Virtual</p>
                   </div>
           
-                  <div class="cards-container">
-                      <div class="card">
-                          <div class="card-content">
-                              <h3>📊 Reporte Principal Serenity</h3>
-                              <p>Reporte detallado de las pruebas automatizadas con Serenity BDD. Incluye resultados, evidencias y métricas de las pruebas ejecutadas.</p>
-                              <div class="file-status">
-          "@
+                  <div class="current-build">
+                      <h2>📋 Ejecución Más Reciente</h2>
+                      <p><strong>Build ID:</strong> $env:BUILD_ID</p>
+                      <p><strong>Commit:</strong> ${{ github.sha }}</p>
+                      <p><strong>Fecha:</strong> $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")</p>
           
-          # Agregar estado del archivo Serenity
-          if (Test-Path "$reportPath/serenity/index.html") {
-              $htmlContent += '<span class="status-ok">✅ Archivo disponible</span>'
-          } else {
-              $htmlContent += '<span class="status-missing">❌ Archivo no encontrado</span>'
-          }
-          
-          $htmlContent += @"
-                              </div>
-                          </div>
-                          <a href="serenity/index.html" class="btn btn-success" target="_blank">Abrir Reporte Completo</a>
-                      </div>
-          
-                      <div class="card">
-                          <div class="card-content">
-                              <h3>📈 Cobertura de Código</h3>
-                              <p>Reporte de cobertura de código generado por JaCoCo. Muestra el porcentaje de código cubierto por las pruebas automatizadas.</p>
-                              <div class="file-status">
-          "@
-          
-          # Agregar estado del archivo JaCoCo
-          if (Test-Path "$reportPath/jacoco/index.html") {
-              $htmlContent += '<span class="status-ok">✅ Archivo disponible</span>'
-          } else {
-              $htmlContent += '<span class="status-missing">❌ Archivo no encontrado</span>'
-          }
-          
-          $htmlContent += @"
-                              </div>
-                          </div>
-                          <a href="jacoco/index.html" class="btn btn-warning" target="_blank">Ver Cobertura</a>
-                      </div>
-          
-                      <div class="card">
-                          <div class="card-content">
-                              <h3>📋 Resumen Ejecutivo</h3>
-                              <p>Resumen general de la ejecución de pruebas con estadísticas, duración y resultados agrupados por características.</p>
-                              <div class="file-status">
-          "@
-          
-          # Agregar estado del archivo Summary
-          if (Test-Path "$reportPath/serenity/summary.html") {
-              $htmlContent += '<span class="status-ok">✅ Archivo disponible</span>'
-          } else {
-              $htmlContent += '<span class="status-missing">❌ Archivo no encontrado</span>'
-          }
-          
-          $htmlContent += @"
-                              </div>
-                          </div>
-                          <a href="serenity/summary.html" class="btn" target="_blank">Ver Resumen</a>
-                      </div>
+                      <a href="build-$env:BUILD_ID/serenity/index.html" class="btn btn-success">📊 Reporte Serenity</a>
+                      <a href="build-$env:BUILD_ID/jacoco/index.html" class="btn">📈 Cobertura JaCoCo</a>
                   </div>
           
-                  <div class="timestamp">
-                      <p>Generado el: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')</p>
+                  <div style="text-align: center; color: white;">
+                      <p><em>Cada ejecución se conserva en una carpeta independiente</em></p>
+                      <p>🕐 Portal generado el: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")</p>
                   </div>
               </div>
-          
-              <script>
-                  // Verificar enlaces y mostrar alertas si no existen
-                  document.addEventListener('DOMContentLoaded', function() {
-                      const links = document.querySelectorAll('a[target="_blank"]');
-                      links.forEach(link => {
-                          link.addEventListener('click', function(e) {
-                              const href = this.getAttribute('href');
-                              fetch(href, { method: 'HEAD' })
-                                  .then(response => {
-                                      if (!response.ok) {
-                                          e.preventDefault();
-                                          alert('El archivo ' + href + ' no está disponible. Puede que no se haya generado correctamente.');
-                                      }
-                                  })
-                                  .catch(() => {
-                                      e.preventDefault();
-                                      alert('El archivo ' + href + ' no está disponible. Puede que no se haya generado correctamente.');
-                                  });
-                          });
-                      });
-                  });
-              </script>
           </body>
           </html>
           "@
           
-          # Escribir el archivo portal
-          $htmlContent | Out-File -FilePath $portalFile -Encoding UTF8
-          Write-Host "✅ Portal de reportes generado correctamente en: $portalFile"
+          $portalContent | Out-File -FilePath "./index.html" -Encoding UTF8
+          Write-Host "✅ Portal principal generado"
 
-      - name: Verificar estructura final
+      - name: Subir reportes con historial a Azure Storage
         run: |
-          Write-Host "📁 Estructura final de reportes:"
-          Get-ChildItem "./reportes" -Recurse | Select-Object FullName | Format-Table
+          Write-Host "🔐 Subiendo reportes a Azure Storage..."
           
-          Write-Host "🔍 Verificando archivos críticos:"
-          $criticalFiles = @(
-              "./reportes/index.html",
-              "./reportes/serenity/index.html", 
-              "./reportes/jacoco/index.html"
-          )
-          
-          foreach ($file in $criticalFiles) {
-              if (Test-Path $file) {
-                  Write-Host "✅ $file" -ForegroundColor Green
-              } else {
-                  Write-Host "❌ $file - NO ENCONTRADO" -ForegroundColor Red
-              }
-          }
-
-      - name: Verificar configuración de Azure
-        run: |
-          Write-Host "🔍 Verificando configuración de Azure..."
-          Write-Host "Storage Account: ${{ secrets.AZURE_STORAGE_ACCOUNT }}"
-          if ([string]::IsNullOrEmpty('${{ secrets.AZURE_STORAGE_KEY }}')) {
-            Write-Host "❌ ERROR: AZURE_STORAGE_KEY no está configurado"
-            exit 1
-          } else {
-            Write-Host "✅ AZURE_STORAGE_KEY está configurado"
-          }
-
-      - name: Subir reportes a Azure Storage con Azure CLI
-        run: |
-          Write-Host "🔐 Conectando a Azure Storage: ${{ secrets.AZURE_STORAGE_ACCOUNT }}"
-          
-          # Subir todos los archivos usando upload-batch
-          az storage blob upload-batch `
+          # Subir el portal principal
+          az storage blob upload `
             --account-name "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
-            --destination '$web' `
-            --source ./reportes `
+            --container-name '$web' `
+            --file "./index.html" `
+            --name "index.html" `
             --auth-mode key `
             --account-key "${{ secrets.AZURE_STORAGE_KEY }}" `
             --overwrite
           
-          if ($LASTEXITCODE -eq 0) {
-              Write-Host "✅ Todos los archivos subidos exitosamente a Azure Storage" -ForegroundColor Green
-          } else {
-              Write-Host "❌ Error al subir archivos a Azure Storage" -ForegroundColor Red
-              exit 1
-          }
+          # Subir la carpeta de build completa
+          az storage blob upload-batch `
+            --account-name "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
+            --destination '$web' `
+            --source "./build-$env:BUILD_ID" `
+            --auth-mode key `
+            --account-key "${{ secrets.AZURE_STORAGE_KEY }}" `
+            --overwrite
+          
+          Write-Host "✅ Build $env:BUILD_ID subida exitosamente"
 
-      - name: Publicar Reporte de Cobertura JaCoCo
-        uses: actions/upload-artifact@v4
-        with:
-          name: jacoco-coverage-report
-          path: build/reports/jacoco/test/html/
-
-      - name: Publicar Reporte Serenity
-        uses: actions/upload-artifact@v4
-        with:
-          name: serenity-report
-          path: target/site/serenity/
-
-      - name: Publicar Reporte JaCoCo XML
-        uses: actions/upload-artifact@v4
-        with:
-          name: jacoco-xml-report
-          path: build/reports/jacoco/test/jacocoTestReport.xml
-
-      - name: Mostrar URL de reportes
+      - name: Mostrar URLs de reportes
         run: |
           $storageAccount = "${{ secrets.AZURE_STORAGE_ACCOUNT }}"
-          echo "📊 Portal de Reportes: https://$storageAccount.z6.web.core.windows.net/"
-          echo "🔗 Reporte Serenity: https://$storageAccount.z6.web.core.windows.net/serenity/index.html"
-          echo "📈 Cobertura JaCoCo: https://$storageAccount.z6.web.core.windows.net/jacoco/index.html"
-          echo "📋 Resumen Ejecutivo: https://$storageAccount.z6.web.core.windows.net/serenity/summary.html"
-          echo "🕐 Publicado en: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+          echo "📊 Portal Principal: https://$storageAccount.z6.web.core.windows.net/"
+          echo "🚀 Build Actual: https://$storageAccount.z6.web.core.windows.net/build-$env:BUILD_ID/serenity/index.html"
+          echo "🔗 Reporte Serenity: https://$storageAccount.z6.web.core.windows.net/build-$env:BUILD_ID/serenity/index.html"
+          echo "📈 Cobertura JaCoCo: https://$storageAccount.z6.web.core.windows.net/build-$env:BUILD_ID/jacoco/index.html"
+          echo "🆔 Build ID: $env:BUILD_ID"
+          echo "💾 Esta ejecución se conservará en el historial"
 
       - name: Fail if tests failed
         if: steps.test-execution.outcome == 'failure'
