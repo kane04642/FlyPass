@@ -3,9 +3,13 @@ param(
     [string]$BuildName,
     [string]$BuildFolder,
     [string]$CommitSha,
-    [bool]$SerenityExists,
-    [bool]$JacocoExists
+    [string]$SerenityExists,  # Cambiado a string
+    [string]$JacocoExists     # Cambiado a string
 )
+
+# Convertir los parámetros string a booleanos
+$SerenityExistsBool = $SerenityExists -eq "True"
+$JacocoExistsBool = $JacocoExists -eq "True"
 
 $fecha = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
 
@@ -112,13 +116,13 @@ $html = @"
             <div class="file-status">
 "@
 
-if ($SerenityExists) {
+if ($SerenityExistsBool) {
     $html += "<a href=`"$BuildFolder/serenity/index.html`" class=`"btn btn-success`" target=`"_blank`">Reporte Serenity Completo</a>"
 } else {
     $html += '<span class="status-missing">Reporte Serenity no disponible</span>'
 }
 
-if ($JacocoExists) {
+if ($JacocoExistsBool) {
     $html += "<a href=`"$BuildFolder/jacoco/index.html`" class=`"btn btn-warning`" target=`"_blank`">Cobertura de Codigo JaCoCo</a>"
 } else {
     $html += '<span class="status-missing">Reporte JaCoCo no disponible</span>'

@@ -94,6 +94,7 @@ jobs:
           $serenityExists = Test-Path "./$env:BUILD_FOLDER/serenity/index.html"
           $jacocoExists = Test-Path "./$env:BUILD_FOLDER/jacoco/index.html"
           
+          # Guardar como strings en lugar de booleanos
           echo "SERENITY_EXISTS=$serenityExists" >> $env:GITHUB_ENV
           echo "JACOCO_EXISTS=$jacocoExists" >> $env:GITHUB_ENV
           
@@ -102,7 +103,7 @@ jobs:
 
       - name: Generar portal principal usando script externo
         run: |
-          ./.github/scripts/generate-portal.ps1 -BuildName "$env:BUILD_NAME" -BuildFolder "$env:BUILD_FOLDER" -CommitSha "${{ github.sha }}" -SerenityExists:$env:SERENITY_EXISTS -JacocoExists:$env:JACOCO_EXISTS
+          ./.github/scripts/generate-portal.ps1 -BuildName "$env:BUILD_NAME" -BuildFolder "$env:BUILD_FOLDER" -CommitSha "${{ github.sha }}" -SerenityExists "$env:SERENITY_EXISTS" -JacocoExists "$env:JACOCO_EXISTS"
 
       - name: Subir TODO a Azure Storage
         run: |
