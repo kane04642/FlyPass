@@ -39,8 +39,10 @@ jobs:
         run: |
           if (Test-Path "target/site/serenity/index.html") {
             echo "Reportes de Serenity generados correctamente"
+            Get-ChildItem "target/site/serenity" | Select-Object Name | Format-Table
           } else {
             echo "No se encontraron reportes de Serenity"
+            Get-ChildItem "target/site" -Recurse -ErrorAction SilentlyContinue | Select-Object FullName | Format-Table
             exit 1
           }
 
@@ -53,7 +55,7 @@ jobs:
       - name: Generar nombre personalizado para la ejecución
         id: build-name
         run: |
-          $fecha = Get-Date -Format "yyyy-MM-dd-HHmmss"
+          $fecha = Get-Date -Format "yyyyMMdd-HHmmss"
           $commitShort = "${{ github.sha }}".Substring(0,7)
           $buildName = "OficinaVirtual-${fecha}-${commitShort}"
           echo "BUILD_NAME=$buildName" >> $env:GITHUB_ENV
@@ -62,6 +64,7 @@ jobs:
 
       - name: Preparar estructura de reportes
         run: |
+          Write-Host "Creando estructura de carpetas..."
           New-Item -ItemType Directory -Path "./$env:BUILD_FOLDER" -Force
           New-Item -ItemType Directory -Path "./$env:BUILD_FOLDER/serenity" -Force
           New-Item -ItemType Directory -Path "./$env:BUILD_FOLDER/jacoco" -Force
@@ -71,10 +74,17 @@ jobs:
         run: |
           Write-Host "Copiando reportes de Serenity..."
           if (Test-Path "target/site/serenity") {
+              Write-Host "Contenido de target/site/serenity:"
+              Get-ChildItem "target/site/serenity" | Select-Object Name, Length | Format-Table
+          
               Copy-Item -Path "target/site/serenity/*" -Destination "./$env:BUILD_FOLDER/serenity/" -Recurse -Force
               Write-Host "Reportes de Serenity copiados"
+          
+              Write-Host "Verificando copia:"
+              Get-ChildItem "./$env:BUILD_FOLDER/serenity" | Select-Object Name, Length | Format-Table
           } else {
-              Write-Host "No se encontro target/site/serenity"
+              Write-Host "ERROR: No se encontro target/site/serenity"
+              Get-ChildItem "target" -Recurse -ErrorAction SilentlyContinue | Select-Object FullName | Format-Table
               exit 1
           }
 
@@ -82,22 +92,46 @@ jobs:
         run: |
           Write-Host "Copiando reportes de JaCoCo..."
           if (Test-Path "build/reports/jacoco/test/html") {
+              Write-Host "Contenido de build/reports/jacoco/test/html:"
+              Get-ChildItem "build/reports/jacoco/test/html" | Select-Object Name, Length | Format-Table
+          
               Copy-Item -Path "build/reports/jacoco/test/html/*" -Destination "./$env:BUILD_FOLDER/jacoco/" -Recurse -Force
               Write-Host "Reportes de JaCoCo copiados"
+          
+              Write-Host "Verificando copia:"
+              Get-ChildItem "./$env:BUILD_FOLDER/jacoco" | Select-Object Name, Length | Format-Table
           } else {
-              Write-Host "No se encontro build/reports/jacoco/test/html - Continuando sin reporte de cobertura"
+              Write-Host "ADVERTENCIA: No se encontro build/reports/jacoco/test/html - Continuando sin reporte de cobertura"
+              Get-ChildItem "build/reports" -Recurse -ErrorAction SilentlyContinue | Select-Object FullName | Format-Table
           }
 
       - name: Verificar estructura final
         run: |
-          Write-Host "Verificando estructura final..."
+          Write-Host "=== VERIFICACION ESTRUCTURA FINAL ==="
+          Write-Host "Contenido de la carpeta build:"
+          Get-ChildItem "./$env:BUILD_FOLDER" -Recurse | Select-Object FullName | Format-Table
+          
+          $criticalFiles = @(
+              "./$env:BUILD_FOLDER/serenity/index.html",
+              "./$env:BUILD_FOLDER/jacoco/index.html"
+          )
+          
+          Write-Host "Verificando archivos criticos:"
+          foreach ($file in $criticalFiles) {
+              if (Test-Path $file) {
+                  Write-Host "✅ $file" -ForegroundColor Green
+              } else {
+                  Write-Host "❌ $file - NO ENCONTRADO" -ForegroundColor Red
+              }
+          }
+          
           $serenityExists = Test-Path "./$env:BUILD_FOLDER/serenity/index.html"
           $jacocoExists = Test-Path "./$env:BUILD_FOLDER/jacoco/index.html"
           
-          # Guardar como strings en lugar de booleanos
           echo "SERENITY_EXISTS=$serenityExists" >> $env:GITHUB_ENV
           echo "JACOCO_EXISTS=$jacocoExists" >> $env:GITHUB_ENV
           
+          Write-Host "Resumen:"
           Write-Host "Serenity existe: $serenityExists"
           Write-Host "JaCoCo existe: $jacocoExists"
 
@@ -105,10 +139,18 @@ jobs:
         run: |
           ./.github/scripts/generate-portal.ps1 -BuildName "$env:BUILD_NAME" -BuildFolder "$env:BUILD_FOLDER" -CommitSha "${{ github.sha }}" -SerenityExists "$env:SERENITY_EXISTS" -JacocoExists "$env:JACOCO_EXISTS"
 
-      - name: Subir TODO a Azure Storage
+      - name: Verificar archivos a subir
         run: |
-          Write-Host "Subiendo reportes a Azure Storage..."
+          Write-Host "=== ARCHIVOS A SUBIR A AZURE ==="
+          Write-Host "Contenido del directorio raiz:"
+          Get-ChildItem "." | Select-Object Name | Format-Table
           
+          Write-Host "Contenido de la carpeta build:"
+          Get-ChildItem "./$env:BUILD_FOLDER" -Recurse | Select-Object Name | Format-Table
+
+      - name: Subir portal principal a Azure Storage
+        run: |
+          Write-Host "Subiendo portal principal a Azure Storage..."
           az storage blob upload `
             --account-name "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
             --container-name '$web' `
@@ -117,7 +159,11 @@ jobs:
             --auth-mode key `
             --account-key "${{ secrets.AZURE_STORAGE_KEY }}" `
             --overwrite
-          
+          Write-Host "✅ Portal principal subido"
+
+      - name: Subir carpeta de build a Azure Storage
+        run: |
+          Write-Host "Subiendo carpeta de build a Azure Storage..."
           az storage blob upload-batch `
             --account-name "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
             --destination '$web' `
@@ -125,27 +171,39 @@ jobs:
             --auth-mode key `
             --account-key "${{ secrets.AZURE_STORAGE_KEY }}" `
             --overwrite
-          
-          Write-Host "Build '$env:BUILD_NAME' subida exitosamente a Azure Storage"
+          Write-Host "✅ Carpeta de build subida"
+
+      - name: Verificar archivos subidos a Azure
+        run: |
+          Write-Host "Verificando archivos en Azure Storage..."
+          az storage blob list `
+            --account-name "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
+            --container-name '$web' `
+            --auth-mode key `
+            --account-key "${{ secrets.AZURE_STORAGE_KEY }}" `
+            --query "[].name" `
+            --output table
 
       - name: Mostrar URLs de acceso
         run: |
           $storageAccount = "${{ secrets.AZURE_STORAGE_ACCOUNT }}"
-          echo " "
-          echo "PORTAL PRINCIPAL DE REPORTES"
-          echo "URL Principal: https://$storageAccount.z6.web.core.windows.net/"
-          echo " "
-          echo "EJECUCION ACTUAL: $env:BUILD_NAME"
-          echo "Reporte Serenity: https://$storageAccount.z6.web.core.windows.net/$env:BUILD_FOLDER/serenity/index.html"
-          echo "Cobertura JaCoCo: https://$storageAccount.z6.web.core.windows.net/$env:BUILD_FOLDER/jacoco/index.html"
-          echo " "
-          echo "Carpeta en Azure: $env:BUILD_FOLDER"
-          echo "Publicado el: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+          echo ""
+          echo "🌐 PORTAL PRINCIPAL DE REPORTES"
+          echo "🌐 ==========================================="
+          echo "🔗 URL Principal: https://$storageAccount.z6.web.core.windows.net/"
+          echo ""
+          echo "🚀 EJECUCION ACTUAL: $env:BUILD_NAME"
+          echo "📊 Reporte Serenity: https://$storageAccount.z6.web.core.windows.net/$env:BUILD_FOLDER/serenity/index.html"
+          echo "📈 Cobertura JaCoCo: https://$storageAccount.z6.web.core.windows.net/$env:BUILD_FOLDER/jacoco/index.html"
+          echo ""
+          echo "📁 Carpeta en Azure: $env:BUILD_FOLDER"
+          echo "🕐 Publicado el: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+          echo "🌐 ==========================================="
 
-      - name: Publicar artifacts en GitHub
+      - name: Publicar artifacts en GitHub (backup)
         uses: actions/upload-artifact@v4
         with:
-          name: reportes-$env:BUILD_NAME
+          name: reportes-${{ env.BUILD_NAME }}
           path: |
             ${{ env.BUILD_FOLDER }}
             index.html

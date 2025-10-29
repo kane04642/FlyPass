@@ -3,8 +3,8 @@ param(
     [string]$BuildName,
     [string]$BuildFolder,
     [string]$CommitSha,
-    [string]$SerenityExists,  # Cambiado a string
-    [string]$JacocoExists     # Cambiado a string
+    [string]$SerenityExists,
+    [string]$JacocoExists
 )
 
 # Convertir los parámetros string a booleanos
@@ -12,6 +12,11 @@ $SerenityExistsBool = $SerenityExists -eq "True"
 $JacocoExistsBool = $JacocoExists -eq "True"
 
 $fecha = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+
+Write-Host "Generando portal para: $BuildName"
+Write-Host "Carpeta: $BuildFolder"
+Write-Host "Serenity existe: $SerenityExistsBool"
+Write-Host "JaCoCo existe: $JacocoExistsBool"
 
 $html = @"
 <!DOCTYPE html>
