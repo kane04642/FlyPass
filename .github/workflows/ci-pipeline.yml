@@ -50,30 +50,74 @@ jobs:
           Start-Process msiexec.exe -Wait -ArgumentList '/I AzureCLI.msi /quiet'
           Remove-Item AzureCLI.msi
 
-      - name: Generar ID único de build
-        id: build-id
+      - name: Generar nombre personalizado para la ejecución
+        id: build-name
         run: |
-          $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+          $fecha = Get-Date -Format "yyyy-MM-dd-HHmmss"
           $commitShort = "${{ github.sha }}".Substring(0,7)
-          $buildId = "${timestamp}-${commitShort}"
-          echo "BUILD_ID=$buildId" >> $env:GITHUB_ENV
-          echo "Build ID: $buildId"
+          $buildName = "OficinaVirtual-${fecha}-${commitShort}"
+          echo "BUILD_NAME=$buildName" >> $env:GITHUB_ENV
+          echo "BUILD_FOLDER=build-$buildName" >> $env:GITHUB_ENV
+          echo "Nombre de build: $buildName"
 
-      - name: Preparar estructura con historial
+      - name: Preparar estructura de reportes
         run: |
-          # Crear carpeta para esta build específica
-          $buildDir = "build-$env:BUILD_ID"
-          New-Item -ItemType Directory -Path "./$buildDir" -Force
-          New-Item -ItemType Directory -Path "./$buildDir/serenity" -Force
-          New-Item -ItemType Directory -Path "./$buildDir/jacoco" -Force
+          # Crear estructura de carpetas
+          New-Item -ItemType Directory -Path "./$env:BUILD_FOLDER" -Force
+          New-Item -ItemType Directory -Path "./$env:BUILD_FOLDER/serenity" -Force
+          New-Item -ItemType Directory -Path "./$env:BUILD_FOLDER/jacoco" -Force
           
-          # Copiar reportes a la carpeta de build
-          Copy-Item -Path "target/site/serenity/*" -Destination "./$buildDir/serenity/" -Recurse -Force
-          Copy-Item -Path "build/reports/jacoco/test/html/*" -Destination "./$buildDir/jacoco/" -Recurse -Force
-          
-          Write-Host "✅ Estructura preparada para: $buildDir"
+          Write-Host "📁 Estructura creada: $env:BUILD_FOLDER"
 
-      - name: Generar portal principal con historial
+      - name: Copiar reportes de Serenity
+        run: |
+          Write-Host "📋 Copiando reportes de Serenity..."
+          if (Test-Path "target/site/serenity") {
+              Copy-Item -Path "target/site/serenity/*" -Destination "./$env:BUILD_FOLDER/serenity/" -Recurse -Force
+              Write-Host "✅ Reportes de Serenity copiados"
+          
+              # Verificar archivos copiados
+              Write-Host "📄 Archivos en serenity:"
+              Get-ChildItem "./$env:BUILD_FOLDER/serenity" | Select-Object Name, Length | Format-Table
+          } else {
+              Write-Host "❌ No se encontró target/site/serenity"
+              exit 1
+          }
+
+      - name: Copiar reportes de JaCoCo
+        run: |
+          Write-Host "📊 Copiando reportes de JaCoCo..."
+          if (Test-Path "build/reports/jacoco/test/html") {
+              Copy-Item -Path "build/reports/jacoco/test/html/*" -Destination "./$env:BUILD_FOLDER/jacoco/" -Recurse -Force
+              Write-Host "✅ Reportes de JaCoCo copiados"
+          
+              # Verificar archivos copiados
+              Write-Host "📄 Archivos en jacoco:"
+              Get-ChildItem "./$env:BUILD_FOLDER/jacoco" | Select-Object Name, Length | Format-Table
+          } else {
+              Write-Host "⚠️ No se encontró build/reports/jacoco/test/html - Continuando sin reporte de cobertura"
+          }
+
+      - name: Verificar estructura final
+        run: |
+          Write-Host "🔍 Verificando estructura final..."
+          $criticalFiles = @(
+              "./$env:BUILD_FOLDER/serenity/index.html",
+              "./$env:BUILD_FOLDER/jacoco/index.html"
+          )
+          
+          foreach ($file in $criticalFiles) {
+              if (Test-Path $file) {
+                  Write-Host "✅ $file" -ForegroundColor Green
+              } else {
+                  Write-Host "⚠️ $file - No encontrado" -ForegroundColor Yellow
+              }
+          }
+          
+          Write-Host "📂 Estructura completa:"
+          Get-ChildItem "./$env:BUILD_FOLDER" -Recurse | Select-Object FullName | Format-Table
+
+      - name: Generar portal principal
         run: |
           $portalContent = @"
           <!DOCTYPE html>
@@ -81,7 +125,7 @@ jobs:
           <head>
               <meta charset="UTF-8">
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Portal de Reportes - Historial</title>
+              <title>Portal de Reportes - Oficina Virtual</title>
               <style>
                   body { 
                       font-family: 'Segoe UI', Arial, sans-serif; 
@@ -91,7 +135,7 @@ jobs:
                       min-height: 100vh;
                   }
                   .container { 
-                      max-width: 1000px; 
+                      max-width: 1200px; 
                       margin: 0 auto; 
                       padding: 40px 20px;
                   }
@@ -99,6 +143,11 @@ jobs:
                       text-align: center;
                       color: white;
                       margin-bottom: 40px;
+                  }
+                  .header h1 {
+                      font-size: 2.5em;
+                      margin-bottom: 10px;
+                      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
                   }
                   .current-build {
                       background: white;
@@ -116,81 +165,172 @@ jobs:
                       text-decoration: none;
                       border-radius: 25px;
                       font-weight: bold;
-                      margin: 5px;
+                      margin: 10px 5px;
+                      transition: all 0.3s ease;
+                  }
+                  .btn:hover {
+                      transform: translateY(-2px);
+                      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
                   }
                   .btn-success {
                       background: #27ae60;
                   }
+                  .btn-success:hover {
+                      background: #219653;
+                  }
+                  .btn-warning {
+                      background: #f39c12;
+                  }
+                  .btn-warning:hover {
+                      background: #e67e22;
+                  }
                   .build-info {
-                      color: #7f8c8d;
+                      background: #f8f9fa;
+                      padding: 15px;
+                      border-radius: 8px;
+                      margin: 15px 0;
+                  }
+                  .file-status {
                       margin-top: 10px;
+                  }
+                  .status-ok {
+                      color: #27ae60;
+                      font-weight: bold;
+                  }
+                  .status-missing {
+                      color: #e74c3c;
+                      font-weight: bold;
                   }
               </style>
           </head>
           <body>
               <div class="container">
                   <div class="header">
-                      <h1>🚀 Historial de Reportes de Pruebas</h1>
+                      <h1>🚀 Portal de Reportes de Pruebas</h1>
                       <p>Ejecuciones automatizadas - Oficina Virtual</p>
                   </div>
           
                   <div class="current-build">
                       <h2>📋 Ejecución Más Reciente</h2>
-                      <p><strong>Build ID:</strong> $env:BUILD_ID</p>
-                      <p><strong>Commit:</strong> ${{ github.sha }}</p>
-                      <p><strong>Fecha:</strong> $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")</p>
+                      <div class="build-info">
+                          <p><strong>Nombre:</strong> $env:BUILD_NAME</p>
+                          <p><strong>Commit:</strong> ${{ github.sha }}</p>
+                          <p><strong>Fecha:</strong> $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")</p>
+                          <p><strong>Carpeta:</strong> $env:BUILD_FOLDER</p>
+                      </div>
           
-                      <a href="build-$env:BUILD_ID/serenity/index.html" class="btn btn-success">📊 Reporte Serenity</a>
-                      <a href="build-$env:BUILD_ID/jacoco/index.html" class="btn">📈 Cobertura JaCoCo</a>
+                      <div class="file-status">
+          "@
+          
+          # Verificar archivos y agregar botones condicionalmente
+          $serenityExists = Test-Path "./$env:BUILD_FOLDER/serenity/index.html"
+          $jacocoExists = Test-Path "./$env:BUILD_FOLDER/jacoco/index.html"
+          
+          if ($serenityExists) {
+              $portalContent += @"
+                          <a href="$env:BUILD_FOLDER/serenity/index.html" class="btn btn-success" target="_blank">
+                              📊 Reporte Serenity Completo
+                          </a>
+          "@
+          } else {
+              $portalContent += @'
+                          <span class="status-missing">❌ Reporte Serenity no disponible</span>
+  '@
+          }
+          
+          if ($jacocoExists) {
+              $portalContent += @"
+                          <a href="$env:BUILD_FOLDER/jacoco/index.html" class="btn btn-warning" target="_blank">
+                              📈 Cobertura de Código JaCoCo
+                          </a>
+          "@
+          } else {
+              $portalContent += @'
+  <span class="status-missing">❌ Reporte JaCoCo no disponible</span>
+  '@
+          }
+          
+          $portalContent += @"
+                      </div>
                   </div>
-          
+                  
                   <div style="text-align: center; color: white;">
-                      <p><em>Cada ejecución se conserva en una carpeta independiente</em></p>
+                      <p><em>💡 Cada ejecución se conserva en una carpeta independiente con nombre descriptivo</em></p>
                       <p>🕐 Portal generado el: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")</p>
                   </div>
               </div>
-          </body>
-          </html>
-          "@
-          
-          $portalContent | Out-File -FilePath "./index.html" -Encoding UTF8
-          Write-Host "✅ Portal principal generado"
+              
+              <script>
+                  // Verificar enlaces antes de navegar
+                  document.addEventListener('DOMContentLoaded', function() {
+  const links = document.querySelectorAll('a.btn');
+  links.forEach(link => {
+  link.addEventListener('click', function(e) {
+  const href = this.getAttribute('href');
+  // No hacemos verificación adicional para permitir la navegación
+  console.log('Navegando a:', href);
+  });
+  });
+  });
+  </script>
+  </body>
+  </html>
+  "@
+  
+  $portalContent | Out-File -FilePath "./index.html" -Encoding UTF8
+  Write-Host "✅ Portal principal generado con verificación de archivos"
 
-      - name: Subir reportes con historial a Azure Storage
-        run: |
-          Write-Host "🔐 Subiendo reportes a Azure Storage..."
-          
-          # Subir el portal principal
-          az storage blob upload `
-            --account-name "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
-            --container-name '$web' `
-            --file "./index.html" `
-            --name "index.html" `
-            --auth-mode key `
-            --account-key "${{ secrets.AZURE_STORAGE_KEY }}" `
-            --overwrite
-          
-          # Subir la carpeta de build completa
-          az storage blob upload-batch `
-            --account-name "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
-            --destination '$web' `
-            --source "./build-$env:BUILD_ID" `
-            --auth-mode key `
-            --account-key "${{ secrets.AZURE_STORAGE_KEY }}" `
-            --overwrite
-          
-          Write-Host "✅ Build $env:BUILD_ID subida exitosamente"
+- name: Subir TODO a Azure Storage
+  run: |
+    Write-Host "🔐 Subiendo reportes a Azure Storage..."
+    
+    # Subir el portal principal (index.html)
+    az storage blob upload `
+      --account-name "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
+      --container-name '$web' `
+      --file "./index.html" `
+      --name "index.html" `
+      --auth-mode key `
+      --account-key "${{ secrets.AZURE_STORAGE_KEY }}" `
+      --overwrite
+    
+    # Subir la carpeta de build completa
+    az storage blob upload-batch `
+      --account-name "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
+      --destination '$web' `
+      --source "./$env:BUILD_FOLDER" `
+      --auth-mode key `
+      --account-key "${{ secrets.AZURE_STORAGE_KEY }}" `
+      --overwrite
+    
+    Write-Host "✅ Build '$env:BUILD_NAME' subida exitosamente a Azure Storage"
 
-      - name: Mostrar URLs de reportes
-        run: |
-          $storageAccount = "${{ secrets.AZURE_STORAGE_ACCOUNT }}"
-          echo "📊 Portal Principal: https://$storageAccount.z6.web.core.windows.net/"
-          echo "🚀 Build Actual: https://$storageAccount.z6.web.core.windows.net/build-$env:BUILD_ID/serenity/index.html"
-          echo "🔗 Reporte Serenity: https://$storageAccount.z6.web.core.windows.net/build-$env:BUILD_ID/serenity/index.html"
-          echo "📈 Cobertura JaCoCo: https://$storageAccount.z6.web.core.windows.net/build-$env:BUILD_ID/jacoco/index.html"
-          echo "🆔 Build ID: $env:BUILD_ID"
-          echo "💾 Esta ejecución se conservará en el historial"
+- name: Mostrar URLs de acceso
+  run: |
+    $storageAccount = "${{ secrets.AZURE_STORAGE_ACCOUNT }}"
+    echo " "
+    echo "🌐 ==========================================="
+    echo "📊 PORTAL PRINCIPAL DE REPORTES"
+    echo "🌐 ==========================================="
+    echo "🔗 URL Principal: https://$storageAccount.z6.web.core.windows.net/"
+    echo " "
+    echo "🚀 EJECUCIÓN ACTUAL: $env:BUILD_NAME"
+    echo "🔗 Reporte Serenity: https://$storageAccount.z6.web.core.windows.net/$env:BUILD_FOLDER/serenity/index.html"
+    echo "📈 Cobertura JaCoCo: https://$storageAccount.z6.web.core.windows.net/$env:BUILD_FOLDER/jacoco/index.html"
+    echo " "
+    echo "📁 Carpeta en Azure: $env:BUILD_FOLDER"
+    echo "🕐 Publicado el: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+    echo "🌐 ==========================================="
 
-      - name: Fail if tests failed
-        if: steps.test-execution.outcome == 'failure'
-        run: exit 1
+- name: Publicar artifacts en GitHub (backup)
+  uses: actions/upload-artifact@v4
+  with:
+    name: reportes-$env:BUILD_NAME
+    path: |
+      ${{ env.BUILD_FOLDER }}
+      index.html
+    retention-days: 7
+
+- name: Fail if tests failed
+  if: steps.test-execution.outcome == 'failure'
+  run: exit 1
