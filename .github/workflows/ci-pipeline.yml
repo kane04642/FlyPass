@@ -62,11 +62,9 @@ jobs:
 
       - name: Preparar estructura de reportes
         run: |
-          # Crear estructura de carpetas
           New-Item -ItemType Directory -Path "./$env:BUILD_FOLDER" -Force
           New-Item -ItemType Directory -Path "./$env:BUILD_FOLDER/serenity" -Force
           New-Item -ItemType Directory -Path "./$env:BUILD_FOLDER/jacoco" -Force
-          
           Write-Host "📁 Estructura creada: $env:BUILD_FOLDER"
 
       - name: Copiar reportes de Serenity
@@ -75,10 +73,6 @@ jobs:
           if (Test-Path "target/site/serenity") {
               Copy-Item -Path "target/site/serenity/*" -Destination "./$env:BUILD_FOLDER/serenity/" -Recurse -Force
               Write-Host "✅ Reportes de Serenity copiados"
-          
-              # Verificar archivos copiados
-              Write-Host "📄 Archivos en serenity:"
-              Get-ChildItem "./$env:BUILD_FOLDER/serenity" | Select-Object Name, Length | Format-Table
           } else {
               Write-Host "❌ No se encontró target/site/serenity"
               exit 1
@@ -90,10 +84,6 @@ jobs:
           if (Test-Path "build/reports/jacoco/test/html") {
               Copy-Item -Path "build/reports/jacoco/test/html/*" -Destination "./$env:BUILD_FOLDER/jacoco/" -Recurse -Force
               Write-Host "✅ Reportes de JaCoCo copiados"
-          
-              # Verificar archivos copiados
-              Write-Host "📄 Archivos en jacoco:"
-              Get-ChildItem "./$env:BUILD_FOLDER/jacoco" | Select-Object Name, Length | Format-Table
           } else {
               Write-Host "⚠️ No se encontró build/reports/jacoco/test/html - Continuando sin reporte de cobertura"
           }
@@ -113,224 +103,143 @@ jobs:
                   Write-Host "⚠️ $file - No encontrado" -ForegroundColor Yellow
               }
           }
-          
-          Write-Host "📂 Estructura completa:"
-          Get-ChildItem "./$env:BUILD_FOLDER" -Recurse | Select-Object FullName | Format-Table
 
       - name: Generar portal principal
         run: |
-          $portalContent = @"
-          <!DOCTYPE html>
-          <html lang="es">
-          <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Portal de Reportes - Oficina Virtual</title>
-              <style>
-                  body { 
-                      font-family: 'Segoe UI', Arial, sans-serif; 
-                      margin: 0; 
-                      padding: 0; 
-                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                      min-height: 100vh;
-                  }
-                  .container { 
-                      max-width: 1200px; 
-                      margin: 0 auto; 
-                      padding: 40px 20px;
-                  }
-                  .header {
-                      text-align: center;
-                      color: white;
-                      margin-bottom: 40px;
-                  }
-                  .header h1 {
-                      font-size: 2.5em;
-                      margin-bottom: 10px;
-                      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-                  }
-                  .current-build {
-                      background: white;
-                      border-radius: 15px;
-                      padding: 30px;
-                      margin-bottom: 30px;
-                      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-                      border-left: 5px solid #27ae60;
-                  }
-                  .btn {
-                      display: inline-block;
-                      background: #3498db;
-                      color: white;
-                      padding: 12px 25px;
-                      text-decoration: none;
-                      border-radius: 25px;
-                      font-weight: bold;
-                      margin: 10px 5px;
-                      transition: all 0.3s ease;
-                  }
-                  .btn:hover {
-                      transform: translateY(-2px);
-                      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-                  }
-                  .btn-success {
-                      background: #27ae60;
-                  }
-                  .btn-success:hover {
-                      background: #219653;
-                  }
-                  .btn-warning {
-                      background: #f39c12;
-                  }
-                  .btn-warning:hover {
-                      background: #e67e22;
-                  }
-                  .build-info {
-                      background: #f8f9fa;
-                      padding: 15px;
-                      border-radius: 8px;
-                      margin: 15px 0;
-                  }
-                  .file-status {
-                      margin-top: 10px;
-                  }
-                  .status-ok {
-                      color: #27ae60;
-                      font-weight: bold;
-                  }
-                  .status-missing {
-                      color: #e74c3c;
-                      font-weight: bold;
-                  }
-              </style>
-          </head>
-          <body>
-              <div class="container">
-                  <div class="header">
-                      <h1>🚀 Portal de Reportes de Pruebas</h1>
-                      <p>Ejecuciones automatizadas - Oficina Virtual</p>
-                  </div>
-          
-                  <div class="current-build">
-                      <h2>📋 Ejecución Más Reciente</h2>
-                      <div class="build-info">
-                          <p><strong>Nombre:</strong> $env:BUILD_NAME</p>
-                          <p><strong>Commit:</strong> ${{ github.sha }}</p>
-                          <p><strong>Fecha:</strong> $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")</p>
-                          <p><strong>Carpeta:</strong> $env:BUILD_FOLDER</p>
-                      </div>
-          
-                      <div class="file-status">
-          "@
-          
-          # Verificar archivos y agregar botones condicionalmente
+          # Primero verificamos los archivos
           $serenityExists = Test-Path "./$env:BUILD_FOLDER/serenity/index.html"
           $jacocoExists = Test-Path "./$env:BUILD_FOLDER/jacoco/index.html"
           
+          # Creamos el contenido HTML paso a paso para evitar problemas de formato
+          $htmlContent = '<!DOCTYPE html>'
+          $htmlContent += '<html lang="es">'
+          $htmlContent += '<head>'
+          $htmlContent += '<meta charset="UTF-8">'
+          $htmlContent += '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
+          $htmlContent += '<title>Portal de Reportes - Oficina Virtual</title>'
+          $htmlContent += '<style>'
+          $htmlContent += 'body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }'
+          $htmlContent += '.container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }'
+          $htmlContent += '.header { text-align: center; color: white; margin-bottom: 40px; }'
+          $htmlContent += '.header h1 { font-size: 2.5em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }'
+          $htmlContent += '.current-build { background: white; border-radius: 15px; padding: 30px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-left: 5px solid #27ae60; }'
+          $htmlContent += '.btn { display: inline-block; background: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 25px; font-weight: bold; margin: 10px 5px; transition: all 0.3s ease; }'
+          $htmlContent += '.btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }'
+          $htmlContent += '.btn-success { background: #27ae60; }'
+          $htmlContent += '.btn-success:hover { background: #219653; }'
+          $htmlContent += '.btn-warning { background: #f39c12; }'
+          $htmlContent += '.btn-warning:hover { background: #e67e22; }'
+          $htmlContent += '.build-info { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; }'
+          $htmlContent += '.file-status { margin-top: 10px; }'
+          $htmlContent += '.status-ok { color: #27ae60; font-weight: bold; }'
+          $htmlContent += '.status-missing { color: #e74c3c; font-weight: bold; }'
+          $htmlContent += '</style>'
+          $htmlContent += '</head>'
+          $htmlContent += '<body>'
+          $htmlContent += '<div class="container">'
+          $htmlContent += '<div class="header">'
+          $htmlContent += '<h1>🚀 Portal de Reportes de Pruebas</h1>'
+          $htmlContent += '<p>Ejecuciones automatizadas - Oficina Virtual</p>'
+          $htmlContent += '</div>'
+          $htmlContent += '<div class="current-build">'
+          $htmlContent += '<h2>📋 Ejecución Más Reciente</h2>'
+          $htmlContent += '<div class="build-info">'
+          $htmlContent += "<p><strong>Nombre:</strong> $env:BUILD_NAME</p>"
+          $htmlContent += "<p><strong>Commit:</strong> ${{ github.sha }}</p>"
+          $htmlContent += "<p><strong>Fecha:</strong> $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')</p>"
+          $htmlContent += "<p><strong>Carpeta:</strong> $env:BUILD_FOLDER</p>"
+          $htmlContent += '</div>'
+          $htmlContent += '<div class="file-status">'
+          
+          # Agregar botones condicionalmente
           if ($serenityExists) {
-              $portalContent += @"
-                          <a href="$env:BUILD_FOLDER/serenity/index.html" class="btn btn-success" target="_blank">
-                              📊 Reporte Serenity Completo
-                          </a>
-          "@
+              $htmlContent += "<a href=`"$env:BUILD_FOLDER/serenity/index.html`" class=`"btn btn-success`" target=`"_blank`">📊 Reporte Serenity Completo</a>"
           } else {
-              $portalContent += @'
-                          <span class="status-missing">❌ Reporte Serenity no disponible</span>
-  '@
+              $htmlContent += '<span class="status-missing">❌ Reporte Serenity no disponible</span>'
           }
           
           if ($jacocoExists) {
-              $portalContent += @"
-                          <a href="$env:BUILD_FOLDER/jacoco/index.html" class="btn btn-warning" target="_blank">
-                              📈 Cobertura de Código JaCoCo
-                          </a>
-          "@
+              $htmlContent += "<a href=`"$env:BUILD_FOLDER/jacoco/index.html`" class=`"btn btn-warning`" target=`"_blank`">📈 Cobertura de Código JaCoCo</a>"
           } else {
-              $portalContent += @'
-  <span class="status-missing">❌ Reporte JaCoCo no disponible</span>
-  '@
+              $htmlContent += '<span class="status-missing">❌ Reporte JaCoCo no disponible</span>'
           }
           
-          $portalContent += @"
-                      </div>
-                  </div>
-                  
-                  <div style="text-align: center; color: white;">
-                      <p><em>💡 Cada ejecución se conserva en una carpeta independiente con nombre descriptivo</em></p>
-                      <p>🕐 Portal generado el: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")</p>
-                  </div>
-              </div>
-              
-              <script>
-                  // Verificar enlaces antes de navegar
-                  document.addEventListener('DOMContentLoaded', function() {
-  const links = document.querySelectorAll('a.btn');
-  links.forEach(link => {
-  link.addEventListener('click', function(e) {
-  const href = this.getAttribute('href');
-  // No hacemos verificación adicional para permitir la navegación
-  console.log('Navegando a:', href);
-  });
-  });
-  });
-  </script>
-  </body>
-  </html>
-  "@
-  
-  $portalContent | Out-File -FilePath "./index.html" -Encoding UTF8
-  Write-Host "✅ Portal principal generado con verificación de archivos"
+          $htmlContent += '</div>'
+          $htmlContent += '</div>'
+          $htmlContent += '<div style="text-align: center; color: white;">'
+          $htmlContent += '<p><em>💡 Cada ejecución se conserva en una carpeta independiente con nombre descriptivo</em></p>'
+          $htmlContent += "<p>🕐 Portal generado el: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')</p>"
+          $htmlContent += '</div>'
+          $htmlContent += '</div>'
+          $htmlContent += '<script>'
+          $htmlContent += 'document.addEventListener("DOMContentLoaded", function() {'
+          $htmlContent += 'const links = document.querySelectorAll("a.btn");'
+          $htmlContent += 'links.forEach(link => {'
+          $htmlContent += 'link.addEventListener("click", function(e) {'
+          $htmlContent += 'const href = this.getAttribute("href");'
+          $htmlContent += 'console.log("Navegando a:", href);'
+          $htmlContent += '});'
+          $htmlContent += '});'
+          $htmlContent += '});'
+          $htmlContent += '</script>'
+          $htmlContent += '</body>'
+          $htmlContent += '</html>'
+          
+          # Guardar el archivo
+          $htmlContent | Out-File -FilePath "./index.html" -Encoding UTF8
+          Write-Host "✅ Portal principal generado con verificación de archivos"
 
-- name: Subir TODO a Azure Storage
-  run: |
-    Write-Host "🔐 Subiendo reportes a Azure Storage..."
-    
-    # Subir el portal principal (index.html)
-    az storage blob upload `
-      --account-name "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
-      --container-name '$web' `
-      --file "./index.html" `
-      --name "index.html" `
-      --auth-mode key `
-      --account-key "${{ secrets.AZURE_STORAGE_KEY }}" `
-      --overwrite
-    
-    # Subir la carpeta de build completa
-    az storage blob upload-batch `
-      --account-name "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
-      --destination '$web' `
-      --source "./$env:BUILD_FOLDER" `
-      --auth-mode key `
-      --account-key "${{ secrets.AZURE_STORAGE_KEY }}" `
-      --overwrite
-    
-    Write-Host "✅ Build '$env:BUILD_NAME' subida exitosamente a Azure Storage"
+      - name: Subir TODO a Azure Storage
+        run: |
+          Write-Host "🔐 Subiendo reportes a Azure Storage..."
+          
+          # Subir el portal principal (index.html)
+          az storage blob upload `
+            --account-name "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
+            --container-name '$web' `
+            --file "./index.html" `
+            --name "index.html" `
+            --auth-mode key `
+            --account-key "${{ secrets.AZURE_STORAGE_KEY }}" `
+            --overwrite
+          
+          # Subir la carpeta de build completa
+          az storage blob upload-batch `
+            --account-name "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
+            --destination '$web' `
+            --source "./$env:BUILD_FOLDER" `
+            --auth-mode key `
+            --account-key "${{ secrets.AZURE_STORAGE_KEY }}" `
+            --overwrite
+          
+          Write-Host "✅ Build '$env:BUILD_NAME' subida exitosamente a Azure Storage"
 
-- name: Mostrar URLs de acceso
-  run: |
-    $storageAccount = "${{ secrets.AZURE_STORAGE_ACCOUNT }}"
-    echo " "
-    echo "🌐 ==========================================="
-    echo "📊 PORTAL PRINCIPAL DE REPORTES"
-    echo "🌐 ==========================================="
-    echo "🔗 URL Principal: https://$storageAccount.z6.web.core.windows.net/"
-    echo " "
-    echo "🚀 EJECUCIÓN ACTUAL: $env:BUILD_NAME"
-    echo "🔗 Reporte Serenity: https://$storageAccount.z6.web.core.windows.net/$env:BUILD_FOLDER/serenity/index.html"
-    echo "📈 Cobertura JaCoCo: https://$storageAccount.z6.web.core.windows.net/$env:BUILD_FOLDER/jacoco/index.html"
-    echo " "
-    echo "📁 Carpeta en Azure: $env:BUILD_FOLDER"
-    echo "🕐 Publicado el: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
-    echo "🌐 ==========================================="
+      - name: Mostrar URLs de acceso
+        run: |
+          $storageAccount = "${{ secrets.AZURE_STORAGE_ACCOUNT }}"
+          echo " "
+          echo "🌐 ==========================================="
+          echo "📊 PORTAL PRINCIPAL DE REPORTES"
+          echo "🌐 ==========================================="
+          echo "🔗 URL Principal: https://$storageAccount.z6.web.core.windows.net/"
+          echo " "
+          echo "🚀 EJECUCIÓN ACTUAL: $env:BUILD_NAME"
+          echo "🔗 Reporte Serenity: https://$storageAccount.z6.web.core.windows.net/$env:BUILD_FOLDER/serenity/index.html"
+          echo "📈 Cobertura JaCoCo: https://$storageAccount.z6.web.core.windows.net/$env:BUILD_FOLDER/jacoco/index.html"
+          echo " "
+          echo "📁 Carpeta en Azure: $env:BUILD_FOLDER"
+          echo "🕐 Publicado el: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+          echo "🌐 ==========================================="
 
-- name: Publicar artifacts en GitHub (backup)
-  uses: actions/upload-artifact@v4
-  with:
-    name: reportes-$env:BUILD_NAME
-    path: |
-      ${{ env.BUILD_FOLDER }}
-      index.html
-    retention-days: 7
+      - name: Publicar artifacts en GitHub (backup)
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportes-$env:BUILD_NAME
+          path: |
+            ${{ env.BUILD_FOLDER }}
+            index.html
+          retention-days: 7
 
-- name: Fail if tests failed
-  if: steps.test-execution.outcome == 'failure'
-  run: exit 1
+      - name: Fail if tests failed
+        if: steps.test-execution.outcome == 'failure'
+        run: exit 1
