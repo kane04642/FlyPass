@@ -1,4 +1,5 @@
 name: CI Pipeline - Oficina Virtual
+
 on:
   push:
     branches: [ main ]
@@ -23,17 +24,21 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+        shell: bash
 
-      - name: Limpiar Reportes
+      - name: Limpiar reportes previos
         run: ./gradlew clearReports
+        shell: bash
 
-      - name: Ejecutar Escenarios de Prueba
+      - name: Ejecutar escenarios de prueba
         id: test-execution
         continue-on-error: true
         run: ./gradlew clean test jacocoTestReport aggregate -Denvironment=qa
+        shell: bash
 
-      - name: Generar Reportes Serenity
+      - name: Generar reportes Serenity
         run: ./gradlew aggregate -Denvironment=qa
+        shell: bash
 
       - name: Instalar Azure CLI
         run: |
@@ -41,9 +46,11 @@ jobs:
           Invoke-WebRequest -Uri https://aka.ms/installazurecliwindows -OutFile AzureCLI.msi
           Start-Process msiexec.exe -Wait -ArgumentList '/I AzureCLI.msi /quiet'
           Remove-Item AzureCLI.msi
+        shell: pwsh
 
       - name: Generar nombre de build
         id: build-name
+        shell: pwsh
         run: |
           $fecha = Get-Date -Format "yyyyMMdd-HHmmss"
           $commitShort = "${{ github.sha }}".Substring(0,7)
@@ -53,32 +60,81 @@ jobs:
           Write-Host "Build generado: $buildName"
 
       - name: Preparar estructura de reportes
+        shell: pwsh
         run: |
           Write-Host "Preparando estructura de reportes..."
-          
-          # Crear directorios
-          New-Item -ItemType Directory -Path "./$env:BUILD_FOLDER" -Force
-          New-Item -ItemType Directory -Path "./$env:BUILD_FOLDER/serenity" -Force
-          New-Item -ItemType Directory -Path "./$env:BUILD_FOLDER/jacoco" -Force
-          
-          # Copiar reportes
+          New-Item -ItemType Directory -Path "./$env:BUILD_FOLDER/serenity" -Force | Out-Null
+          New-Item -ItemType Directory -Path "./$env:BUILD_FOLDER/jacoco" -Force | Out-Null
+
           Write-Host "Copiando reportes de Serenity..."
           Copy-Item -Path "target/site/serenity/*" -Destination "./$env:BUILD_FOLDER/serenity/" -Recurse -Force
-          
+
           Write-Host "Copiando reportes de JaCoCo..."
           if (Test-Path "build/reports/jacoco/test/html") {
-              Copy-Item -Path "build/reports/jacoco/test/html/*" -Destination "./$env:BUILD_FOLDER/jacoco/" -Recurse -Force
+            Copy-Item -Path "build/reports/jacoco/test/html/*" -Destination "./$env:BUILD_FOLDER/jacoco/" -Recurse -Force
           } else {
-              Write-Host "JaCoCo no disponible, continuando..."
+            Write-Host "⚠️ JaCoCo no disponible, continuando..."
           }
 
-      - name: Desplegar reportes a Azure
+      - name: Generar portal principal
+        shell: pwsh
         run: |
-          ./.github/scripts/deploy-reports.ps1 `
+          Write-Host "Generando portal principal..."
+          $fecha = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+          $storage = "${{ secrets.AZURE_STORAGE_ACCOUNT }}"
+          $htmlContent = @()
+          $htmlContent += '<!DOCTYPE html>'
+          $htmlContent += '<html>'
+          $htmlContent += '<head>'
+          $htmlContent += '<meta charset="utf-8">'
+          $htmlContent += '<title>Reportes - Oficina Virtual</title>'
+          $htmlContent += '<style>'
+          $htmlContent += 'body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }'
+          $htmlContent += '.container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }'
+          $htmlContent += 'h1 { color: #2c3e50; }'
+          $htmlContent += '.btn { display: inline-block; padding: 10px 20px; margin: 10px; background: #3498db; color: white; text-decoration: none; border-radius: 5px; }'
+          $htmlContent += '.btn-success { background: #27ae60; }'
+          $htmlContent += '.btn-warning { background: #f39c12; }'
+          $htmlContent += '</style>'
+          $htmlContent += '</head>'
+          $htmlContent += '<body>'
+          $htmlContent += '<div class="container">'
+          $htmlContent += '<h1>Reportes de Pruebas Automatizadas</h1>'
+          $htmlContent += "<p><strong>Build:</strong> $env:BUILD_NAME</p>"
+          $htmlContent += "<p><strong>Fecha:</strong> $fecha</p>"
+          $htmlContent += '<div>'
+          $htmlContent += "<a href='https://$storage.z20.web.core.windows.net/$env:BUILD_FOLDER/serenity/index.html' class='btn btn-success'>Reporte Serenity</a>"
+          $htmlContent += "<a href='https://$storage.z20.web.core.windows.net/$env:BUILD_FOLDER/jacoco/index.html' class='btn btn-warning'>Reporte JaCoCo</a>"
+          $htmlContent += "<a href='https://$storage.z20.web.core.windows.net/diagnostic.html' class='btn'>Diagnóstico</a>"
+          $htmlContent += '</div>'
+          $htmlContent += '</div>'
+          $htmlContent += '</body>'
+          $htmlContent += '</html>'
+
+          $htmlContent -join "`n" | Out-File -FilePath "./index.html" -Encoding UTF8
+          Write-Host "✅ Portal principal generado"
+
+      - name: Ejecutar diagnóstico y despliegue
+        shell: pwsh
+        run: |
+          ./.github/scripts/debug-deploy.ps1 `
             -BuildName "$env:BUILD_NAME" `
             -BuildFolder "$env:BUILD_FOLDER" `
             -StorageAccount "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
-            -StorageKey "${{ secrets.AZURE_STORAGE_KEY }}"
+            -SasToken "${{ secrets.AZURE_SAS_TOKEN }}"
+
+      - name: Mostrar URLs finales
+        shell: pwsh
+        run: |
+          $storage = "${{ secrets.AZURE_STORAGE_ACCOUNT }}"
+          Write-Host ""
+          Write-Host "🎉 PUBLICACIÓN COMPLETADA"
+          Write-Host "========================================"
+          Write-Host "🌐 Portal Principal: https://$storage.z20.web.core.windows.net/"
+          Write-Host "📊 Reporte Serenity: https://$storage.z20.web.core.windows.net/$env:BUILD_FOLDER/serenity/index.html"
+          Write-Host "📈 Reporte JaCoCo: https://$storage.z20.web.core.windows.net/$env:BUILD_FOLDER/jacoco/index.html"
+          Write-Host "🔍 Diagnóstico: https://$storage.z20.web.core.windows.net/diagnostic.html"
+          Write-Host "========================================"
 
       - name: Publicar artifacts en GitHub
         uses: actions/upload-artifact@v4
@@ -87,6 +143,7 @@ jobs:
           path: |
             ${{ env.BUILD_FOLDER }}
             index.html
+            diagnostic.html
           retention-days: 3
 
       - name: Fail if tests failed
