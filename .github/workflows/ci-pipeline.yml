@@ -37,18 +37,20 @@ jobs:
           Write-Host "📦 Nombre del build: $env:BUILD_NAME"
           Write-Host "📁 Carpeta del build: $env:BUILD_FOLDER"
 
-          # Crear estructura para reportes
+          # Crear carpetas de reportes
           New-Item -ItemType Directory -Force -Path $env:BUILD_FOLDER | Out-Null
           Copy-Item -Path "target/site/serenity" -Destination "$env:BUILD_FOLDER/serenity" -Recurse -Force
           Copy-Item -Path "target/site/jacoco" -Destination "$env:BUILD_FOLDER/jacoco" -Recurse -Force
 
-          # Generar HTML principal de reportes
+          # Storage account
           $storage = "${{ secrets.AZURE_STORAGE_ACCOUNT }}"
+
+          # HTML principal
           $htmlContent = @"
   <!DOCTYPE html>
   <html>
   <head>
-  <meta charset="utf-8">
+  <meta charset=""utf-8"">
   <title>Reportes - Oficina Virtual</title>
   <style>
 body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
@@ -60,14 +62,14 @@ h1 { color: #2c3e50; }
   </style>
   </head>
   <body>
-  <div class="container">
+  <div class=""container"">
   <h1>Reportes de Pruebas Automatizadas</h1>
   <p><strong>Build:</strong> $env:BUILD_NAME</p>
   <p><strong>Fecha:</strong> $(Get-Date)</p>
   <div>
-  <a href="https://$storage.z20.web.core.windows.net/$env:BUILD_FOLDER/serenity/index.html" class="btn btn-success">Reporte Serenity</a>
-  <a href="https://$storage.z20.web.core.windows.net/$env:BUILD_FOLDER/jacoco/index.html" class="btn btn-warning">Reporte Jacoco</a>
-  <a href="https://$storage.z20.web.core.windows.net/$env:BUILD_FOLDER/diagnostic.html" class="btn">Diagnóstico</a>
+  <a href=""https://$storage.z20.web.core.windows.net/$env:BUILD_FOLDER/serenity/index.html"" class=""btn btn-success"">Reporte Serenity</a>
+  <a href=""https://$storage.z20.web.core.windows.net/$env:BUILD_FOLDER/jacoco/index.html"" class=""btn btn-warning"">Reporte Jacoco</a>
+  <a href=""https://$storage.z20.web.core.windows.net/$env:BUILD_FOLDER/diagnostic.html"" class=""btn"">Diagnóstico</a>
   </div>
   </div>
   </body>
@@ -75,12 +77,13 @@ h1 { color: #2c3e50; }
   "@
 
           Set-Content -Path "$env:BUILD_FOLDER\index.html" -Value $htmlContent -Encoding UTF8
-  Write-Host "✅ Portal principal generado en $env:BUILD_FOLDER\index.html"
+  Write-Host "✅ Portal principal generado"
 
 - name: Ejecutar diagnóstico y despliegue
   shell: pwsh
   run: |
-    Write-Host "🚀 Ejecutando script de despliegue debug-deploy.ps1..."
+    Write-Host "🚀 Ejecutando script debug-deploy.ps1..."
+    
     $scriptPath = ".\\.github\\scripts\\debug-deploy.ps1"
     
     if (-Not (Test-Path $scriptPath)) {
@@ -88,10 +91,8 @@ h1 { color: #2c3e50; }
       exit 1
     }
     
-    # Permitir ejecución de scripts en esta sesión
     Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
     
-    # Ejecutar script con parámetros
     & $scriptPath `
       -BuildName "$env:BUILD_NAME" `
       -BuildFolder "$env:BUILD_FOLDER" `
