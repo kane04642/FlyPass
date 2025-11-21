@@ -25,24 +25,34 @@ jobs:
         uses: gradle/gradle-build-action@v3
 
       - name: Ejecutar pruebas
+        shell: pwsh
         run: ./gradlew clean test aggregate
 
       - name: Preparar carpetas build OV
         shell: pwsh
         run: |
+          # Fecha del build
           $date = Get-Date -Format "yyyy-MM-dd_HHmmss"
-          $env:BUILD_NAME = "OficinaVirtual-$date-${{ github.sha.Substring(0,7) }}"
-          $env:BUILD_FOLDER = "build-OficinaVirtual-$date-${{ github.sha.Substring(0,7) }}"
 
-          Write-Host "Build: $env:BUILD_NAME"
-          Write-Host "Carpeta: $env:BUILD_FOLDER"
+          # SHA corto
+          $sha = "${{ github.sha }}"
+          $shortSha = $sha.Substring(0,7)
 
+          # Variables del build
+          $env:BUILD_NAME = "OficinaVirtual-$date-$shortSha"
+          $env:BUILD_FOLDER = "build-OficinaVirtual-$date-$shortSha"
+
+          Write-Host "📦 Build: $env:BUILD_NAME"
+          Write-Host "📁 Folder: $env:BUILD_FOLDER"
+
+          # Crear carpeta del build
           New-Item -ItemType Directory -Force -Path $env:BUILD_FOLDER | Out-Null
 
+          # Copiar reportes
           Copy-Item "target/site/serenity" "$env:BUILD_FOLDER/serenity" -Recurse -Force
           Copy-Item "target/site/jacoco" "$env:BUILD_FOLDER/jacoco" -Recurse -Force
 
-      - name: Generar portal HTML
+      - name: Generar portal HTML del build
         shell: pwsh
         run: |
           .\.github\scripts\generar-html.ps1 `
@@ -66,3 +76,10 @@ jobs:
             -BuildFolder $env:BUILD_FOLDER `
             -StorageAccount "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
             -SasToken "${{ secrets.AZURE_SAS_TOKEN }}"
+
+      - name: Generar Portal Maestro
+        shell: pwsh
+        run: |
+          # Crear registro JSON para el portal maestro
+          $item = @{
+            Nombre  = $env:BUILD_NAME
