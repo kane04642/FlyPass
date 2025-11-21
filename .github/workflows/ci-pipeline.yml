@@ -39,18 +39,33 @@ jobs:
           $shortSha = $sha.Substring(0,7)
 
           # Variables del build
-          $env:BUILD_NAME = "OficinaVirtual-$date-$shortSha"
+          $env:BUILD_NAME   = "OficinaVirtual-$date-$shortSha"
           $env:BUILD_FOLDER = "build-OficinaVirtual-$date-$shortSha"
 
-          Write-Host "📦 Build: $env:BUILD_NAME"
+          Write-Host "📦 Build:  $env:BUILD_NAME"
           Write-Host "📁 Folder: $env:BUILD_FOLDER"
 
-          # Crear carpeta del build
+          # Crear carpeta principal
           New-Item -ItemType Directory -Force -Path $env:BUILD_FOLDER | Out-Null
 
-          # Copiar reportes
-          Copy-Item "target/site/serenity" "$env:BUILD_FOLDER/serenity" -Recurse -Force
-          Copy-Item "target/site/jacoco" "$env:BUILD_FOLDER/jacoco" -Recurse -Force
+          # === COPIA DE REPORTES ===
+          # SERENITY
+          if (Test-Path "target/site/serenity") {
+            Write-Host "➡ Copiando Serenity..."
+            Copy-Item "target/site/serenity" "$env:BUILD_FOLDER/serenity" -Recurse -Force
+          }
+          else {
+            Write-Host "⚠ No existe target/site/serenity — se omite."
+          }
+
+          # JACOCO (OPCIONAL)
+          if (Test-Path "target/site/jacoco") {
+            Write-Host "➡ Copiando Jacoco..."
+            Copy-Item "target/site/jacoco" "$env:BUILD_FOLDER/jacoco" -Recurse -Force
+          }
+          else {
+            Write-Host "⚠ No existe target/site/jacoco — se omite (NO ES UN ERROR)."
+          }
 
       - name: Generar portal HTML del build
         shell: pwsh
@@ -80,6 +95,6 @@ jobs:
       - name: Generar Portal Maestro
         shell: pwsh
         run: |
-          # Crear registro JSON para el portal maestro
-          $item = @{
-            Nombre  = $env:BUILD_NAME
+          .\.github\scripts\generar-portal-maestro.ps1 `
+            -StorageAccount "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
+            -SasToken "${{ secrets.AZURE_SAS_TOKEN }}"
