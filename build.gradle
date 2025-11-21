@@ -69,7 +69,7 @@ java.targetCompatibility = JavaVersion.VERSION_17
 compileJava.options.encoding = "UTF-8"
 compileTestJava.options.encoding = "UTF-8"
 
-// Configuración de JaCoCo
+// Configuración de JaCoCo 1
 jacoco { // <--- AÑADIR ESTE BLOQUE para configurar JaCoCo
     toolVersion = "${jacocoToolVersion}" // Usar la versión definida en ext
     reportsDirectory = layout.buildDirectory.dir('reports/jacoco') // Directorio base para reportes
