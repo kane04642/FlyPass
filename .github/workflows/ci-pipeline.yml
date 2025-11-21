@@ -39,32 +39,40 @@ jobs:
           $shortSha = $sha.Substring(0,7)
 
           # Variables del build
-          $env:BUILD_NAME = "OficinaVirtual-$date-$shortSha"
-          $env:BUILD_FOLDER = "build-OficinaVirtual-$date-$shortSha"
+          $Env:BUILD_NAME = "OficinaVirtual-$date-$shortSha"
+          $Env:BUILD_FOLDER = "build-OficinaVirtual-$date-$shortSha"
 
-          Write-Host "📦 Build: $env:BUILD_NAME"
-          Write-Host "📁 Folder: $env:BUILD_FOLDER"
+          Write-Host "📦 Build: $Env:BUILD_NAME"
+          Write-Host "📁 Folder: $Env:BUILD_FOLDER"
 
-          # Crear carpeta del build
-          New-Item -ItemType Directory -Force -Path $env:BUILD_FOLDER | Out-Null
+          # Crear carpeta contenedora
+          New-Item -ItemType Directory -Force -Path $Env:BUILD_FOLDER | Out-Null
 
-          # Copiar únicamente reportes Serenity (estructura real de tu proyecto)
-          Copy-Item "target/site/serenity" "$env:BUILD_FOLDER/serenity" -Recurse -Force
+          # Copiar SERENITY (tu estructura real)
+          if (Test-Path "target/site/serenity") {
+            Copy-Item "target/site/serenity" "$Env:BUILD_FOLDER/serenity" -Recurse -Force
+          } else {
+            Write-Error "❌ No existe target/site/serenity. No hay reportes para copiar."
+            exit 1
+          }
 
       - name: Generar portal HTML del build
         shell: pwsh
         run: |
+          Write-Host "BUILD_FOLDER => $Env:BUILD_FOLDER"
+          Write-Host "BUILD_NAME => $Env:BUILD_NAME"
+
           .\.github\scripts\generar-html.ps1 `
-            -BuildName $env:BUILD_NAME `
-            -BuildFolder $env:BUILD_FOLDER `
+            -BuildName $Env:BUILD_NAME `
+            -BuildFolder $Env:BUILD_FOLDER `
             -Storage "${{ secrets.AZURE_STORAGE_ACCOUNT }}"
 
       - name: Generar diagnóstico
         shell: pwsh
         run: |
           .\.github\scripts\debug-deploy.ps1 `
-            -BuildName $env:BUILD_NAME `
-            -BuildFolder $env:BUILD_FOLDER `
+            -BuildName $Env:BUILD_NAME `
+            -BuildFolder $Env:BUILD_FOLDER `
             -StorageAccount "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
             -SasToken "${{ secrets.AZURE_SAS_TOKEN }}"
 
@@ -72,7 +80,7 @@ jobs:
         shell: pwsh
         run: |
           .\.github\scripts\upload-to-azure.ps1 `
-            -BuildFolder $env:BUILD_FOLDER `
+            -BuildFolder $Env:BUILD_FOLDER `
             -StorageAccount "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
             -SasToken "${{ secrets.AZURE_SAS_TOKEN }}"
 
@@ -85,75 +93,66 @@ jobs:
           $baseUrl = "https://$storageAccount.z20.web.core.windows.net"
           $historyUrl = "$baseUrl/index.json`?$sasToken"
 
-          # Intentar leer historial existente
-          Write-Host "📖 Leyendo historial existente (index.json) si existe..."
+          Write-Host "📖 Intentando leer index.json..."
+
+          # Leer historial si existe
           $existingJson = "[]"
           try {
-            $response = Invoke-RestMethod -Method Get -Uri $historyUrl -ErrorAction Stop
-            if ($response) {
-              $existingJson = $response | ConvertTo-Json -Depth 10
-            }
+            $res = Invoke-RestMethod -Method Get -Uri $historyUrl -ErrorAction Stop
+            if ($res) { $existingJson = $res | ConvertTo-Json -Depth 20 }
           } catch {
-            Write-Host "ℹ️ No se encontró historial previo, se creará uno nuevo."
+            Write-Host "ℹ️ No existe historial previo. Se creará uno nuevo."
           }
 
-          # Convertir historial existente
+          # Convertir historial
           $history = @()
-          if (-not [string]::IsNullOrWhiteSpace($existingJson)) {
-            $history = $existingJson | ConvertFrom-Json
-          }
+          if ($existingJson -ne "[]") { $history = $existingJson | ConvertFrom-Json }
 
-          if (-not $history) { $history = @() }
-
-          # Nuevo item de build
+          # Nuevo registro
           $item = [PSCustomObject]@{
-            Nombre  = $env:BUILD_NAME
-            Carpeta = $env:BUILD_FOLDER
+            Nombre  = $Env:BUILD_NAME
+            Carpeta = $Env:BUILD_FOLDER
             Fecha   = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
             SHA     = $sha.Substring(0,7)
             Storage = $storageAccount
           }
 
-          # Eliminar duplicados por carpeta
+          # Eliminar si ya existe
           $history = $history | Where-Object { $_.Carpeta -ne $item.Carpeta }
           $history += $item
 
-          # Ordenar por fecha descendente
+          # Ordenar por fecha DESC
           $history = $history | Sort-Object Fecha -Descending
 
-          # Convertir a JSON y guardar local
-          $historyJson = $history | ConvertTo-Json -Depth 5
-          Set-Content -Path "index.json" -Value $historyJson -Encoding UTF8
+          # Guardar nuevo JSON local
+          $json = $history | ConvertTo-Json -Depth 20
+          Set-Content -Path "index.json" -Value $json -Encoding UTF8
 
-          # Generar portal maestro con todo el historial
+          # Generar portal maestro
           .\.github\scripts\generar-portal-maestro.ps1 `
-            -BuildsListJson $historyJson `
+            -BuildsListJson $json `
             -OutputFile "index.html"
 
-      - name: Subir historial y Portal Maestro a Azure (index.json / index.html raíz)
+      - name: Subir historial y portal maestro
         shell: pwsh
         run: |
           $storageAccount = "${{ secrets.AZURE_STORAGE_ACCOUNT }}"
           $sasToken = "${{ secrets.AZURE_SAS_TOKEN }}"
           $baseUrl = "https://$storageAccount.z20.web.core.windows.net"
-
           $headers = @{ "x-ms-blob-type" = "BlockBlob" }
 
-          $indexJsonUrl = "$baseUrl/index.json`?$sasToken"
-          $indexHtmlUrl = "$baseUrl/index.html`?$sasToken"
-
-          Write-Host "⬆️ Subiendo index.json (historial)..."
+          # Subir index.json
           Invoke-RestMethod -Method Put `
-            -Uri $indexJsonUrl `
+            -Uri "$baseUrl/index.json`?$sasToken" `
             -Headers $headers `
             -InFile "index.json" `
             -ContentType "application/json"
 
-          Write-Host "⬆️ Subiendo index.html (portal maestro)..."
+          # Subir index.html
           Invoke-RestMethod -Method Put `
-            -Uri $indexHtmlUrl `
+            -Uri "$baseUrl/index.html`?$sasToken" `
             -Headers $headers `
             -InFile "index.html" `
             -ContentType "text/html"
 
-          Write-Host "🌍 Portal maestro e historial actualizados correctamente en Azure."
+          Write-Host "🌍 Portal maestro e historial actualizados correctamente."
