@@ -12,10 +12,10 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout código fuente
+      - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Configurar Java JDK 17
+      - name: Configurar Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -24,77 +24,45 @@ jobs:
       - name: Configurar Gradle
         uses: gradle/gradle-build-action@v3
 
-      - name: Compilar y ejecutar pruebas
-        run: |
-          ./gradlew clean test aggregate
+      - name: Ejecutar pruebas
+        run: ./gradlew clean test aggregate
 
-      - name: Generar portal principal
+      - name: Preparar carpetas build OV
         shell: pwsh
         run: |
           $date = Get-Date -Format "yyyy-MM-dd_HHmmss"
           $env:BUILD_NAME = "OficinaVirtual-$date-${{ github.sha.Substring(0,7) }}"
           $env:BUILD_FOLDER = "build-OficinaVirtual-$date-${{ github.sha.Substring(0,7) }}"
-          Write-Host "📦 Nombre del build: $env:BUILD_NAME"
-          Write-Host "📁 Carpeta del build: $env:BUILD_FOLDER"
 
-          # Crear carpetas de reportes
+          Write-Host "Build: $env:BUILD_NAME"
+          Write-Host "Carpeta: $env:BUILD_FOLDER"
+
           New-Item -ItemType Directory -Force -Path $env:BUILD_FOLDER | Out-Null
-          Copy-Item -Path "target/site/serenity" -Destination "$env:BUILD_FOLDER/serenity" -Recurse -Force
-          Copy-Item -Path "target/site/jacoco" -Destination "$env:BUILD_FOLDER/jacoco" -Recurse -Force
 
-          # Storage account
-          $storage = "${{ secrets.AZURE_STORAGE_ACCOUNT }}"
+          Copy-Item "target/site/serenity" "$env:BUILD_FOLDER/serenity" -Recurse -Force
+          Copy-Item "target/site/jacoco" "$env:BUILD_FOLDER/jacoco" -Recurse -Force
 
-          # HTML principal
-          $htmlContent = @"
-  <!DOCTYPE html>
-  <html>
-  <head>
-  <meta charset=""utf-8"">
-  <title>Reportes - Oficina Virtual</title>
-  <style>
-body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
-.container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
-h1 { color: #2c3e50; }
-.btn { display: inline-block; padding: 10px 20px; margin: 10px; background: #3498db; color: white; text-decoration: none; border-radius: 4px; }
-.btn-success { background: #27ae60; }
-.btn-warning { background: #f39c12; }
-  </style>
-  </head>
-  <body>
-  <div class=""container"">
-  <h1>Reportes de Pruebas Automatizadas</h1>
-  <p><strong>Build:</strong> $env:BUILD_NAME</p>
-  <p><strong>Fecha:</strong> $(Get-Date)</p>
-  <div>
-  <a href=""https://$storage.z20.web.core.windows.net/$env:BUILD_FOLDER/serenity/index.html"" class=""btn btn-success"">Reporte Serenity</a>
-  <a href=""https://$storage.z20.web.core.windows.net/$env:BUILD_FOLDER/jacoco/index.html"" class=""btn btn-warning"">Reporte Jacoco</a>
-  <a href=""https://$storage.z20.web.core.windows.net/$env:BUILD_FOLDER/diagnostic.html"" class=""btn"">Diagnóstico</a>
-  </div>
-  </div>
-  </body>
-  </html>
-  "@
+      - name: Generar portal HTML
+        shell: pwsh
+        run: |
+          .\.github\scripts\generar-html.ps1 `
+            -BuildName $env:BUILD_NAME `
+            -BuildFolder $env:BUILD_FOLDER `
+            -Storage "${{ secrets.AZURE_STORAGE_ACCOUNT }}"
 
-          Set-Content -Path "$env:BUILD_FOLDER\index.html" -Value $htmlContent -Encoding UTF8
-  Write-Host "✅ Portal principal generado"
+      - name: Generar diagnóstico
+        shell: pwsh
+        run: |
+          .\.github\scripts\debug-deploy.ps1 `
+            -BuildName $env:BUILD_NAME `
+            -BuildFolder $env:BUILD_FOLDER `
+            -StorageAccount "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
+            -SasToken "${{ secrets.AZURE_SAS_TOKEN }}"
 
-- name: Ejecutar diagnóstico y despliegue
-  shell: pwsh
-  run: |
-    Write-Host "🚀 Ejecutando script debug-deploy.ps1..."
-    
-    $scriptPath = ".\\.github\\scripts\\debug-deploy.ps1"
-    
-    if (-Not (Test-Path $scriptPath)) {
-      Write-Error "❌ No se encontró el script en la ruta esperada: $scriptPath"
-      exit 1
-    }
-    
-    Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
-    
-    & $scriptPath `
-      -BuildName "$env:BUILD_NAME" `
-      -BuildFolder "$env:BUILD_FOLDER" `
-      -StorageAccount "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
-      -SasToken "${{ secrets.AZURE_SAS_TOKEN }}"
+      - name: Subir reportes a Azure Static Website
+        shell: pwsh
+        run: |
+          .\.github\scripts\upload-to-azure.ps1 `
+            -BuildFolder $env:BUILD_FOLDER `
+            -StorageAccount "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
+            -SasToken "${{ secrets.AZURE_SAS_TOKEN }}"

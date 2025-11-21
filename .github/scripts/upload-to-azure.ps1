@@ -1,0 +1,49 @@
+param(
+    [string]$BuildFolder,
+    [string]$StorageAccount,
+    [string]$SasToken
+)
+
+Write-Host "🚀 Iniciando carga a Azure Static Website..."
+Write-Host "📁 Carpeta: $BuildFolder"
+Write-Host "☁️ Storage Account: $StorageAccount"
+
+if (-not (Test-Path $BuildFolder)) {
+    Write-Error "❌ No existe la carpeta a subir: $BuildFolder"
+    exit 1
+}
+
+# Endpoint Azure Static Website
+$baseUrl = "https://$StorageAccount.z20.web.core.windows.net"
+
+# Recorrer todos los archivos del build
+$files = Get-ChildItem -Path $BuildFolder -Recurse -File
+
+foreach ($file in $files) {
+
+    # Obtener ruta relativa para mantener estructura
+    $relativePath = $file.FullName.Replace((Resolve-Path $BuildFolder), "").TrimStart("\").Replace("\", "/")
+
+    $uploadUrl = "$baseUrl/$relativePath`?$SasToken"
+
+    Write-Host "⬆️ Subiendo: $relativePath"
+
+    $headers = @{
+        "x-ms-blob-type" = "BlockBlob"
+    }
+
+    try {
+        Invoke-RestMethod -Method Put `
+            -Uri $uploadUrl `
+            -Headers $headers `
+            -InFile $file.FullName `
+            -ContentType "application/octet-stream"
+
+        Write-Host "   ✔ OK"
+
+    } catch {
+        Write-Host "   ❌ Error subiendo $relativePath: $_"
+    }
+}
+
+Write-Host "🎉 Carga completada correctamente."
