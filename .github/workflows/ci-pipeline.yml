@@ -48,9 +48,8 @@ jobs:
           # Crear carpeta del build
           New-Item -ItemType Directory -Force -Path $env:BUILD_FOLDER | Out-Null
 
-          # Copiar reportes
+          # Copiar únicamente reportes Serenity (estructura real de tu proyecto)
           Copy-Item "target/site/serenity" "$env:BUILD_FOLDER/serenity" -Recurse -Force
-          Copy-Item "target/site/jacoco" "$env:BUILD_FOLDER/jacoco" -Recurse -Force
 
       - name: Generar portal HTML del build
         shell: pwsh
@@ -77,9 +76,84 @@ jobs:
             -StorageAccount "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
             -SasToken "${{ secrets.AZURE_SAS_TOKEN }}"
 
-      - name: Generar Portal Maestro
+      - name: Actualizar historial y generar Portal Maestro
         shell: pwsh
         run: |
-          # Crear registro JSON para el portal maestro
-          $item = @{
+          $storageAccount = "${{ secrets.AZURE_STORAGE_ACCOUNT }}"
+          $sasToken = "${{ secrets.AZURE_SAS_TOKEN }}"
+
+          $baseUrl = "https://$storageAccount.z20.web.core.windows.net"
+          $historyUrl = "$baseUrl/index.json`?$sasToken"
+
+          # Intentar leer historial existente
+          Write-Host "📖 Leyendo historial existente (index.json) si existe..."
+          $existingJson = "[]"
+          try {
+            $response = Invoke-RestMethod -Method Get -Uri $historyUrl -ErrorAction Stop
+            if ($response) {
+              $existingJson = $response | ConvertTo-Json -Depth 10
+            }
+          } catch {
+            Write-Host "ℹ️ No se encontró historial previo, se creará uno nuevo."
+          }
+
+          # Convertir historial existente
+          $history = @()
+          if (-not [string]::IsNullOrWhiteSpace($existingJson)) {
+            $history = $existingJson | ConvertFrom-Json
+          }
+
+          if (-not $history) { $history = @() }
+
+          # Nuevo item de build
+          $item = [PSCustomObject]@{
             Nombre  = $env:BUILD_NAME
+            Carpeta = $env:BUILD_FOLDER
+            Fecha   = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+            SHA     = $sha.Substring(0,7)
+            Storage = $storageAccount
+          }
+
+          # Eliminar duplicados por carpeta
+          $history = $history | Where-Object { $_.Carpeta -ne $item.Carpeta }
+          $history += $item
+
+          # Ordenar por fecha descendente
+          $history = $history | Sort-Object Fecha -Descending
+
+          # Convertir a JSON y guardar local
+          $historyJson = $history | ConvertTo-Json -Depth 5
+          Set-Content -Path "index.json" -Value $historyJson -Encoding UTF8
+
+          # Generar portal maestro con todo el historial
+          .\.github\scripts\generar-portal-maestro.ps1 `
+            -BuildsListJson $historyJson `
+            -OutputFile "index.html"
+
+      - name: Subir historial y Portal Maestro a Azure (index.json / index.html raíz)
+        shell: pwsh
+        run: |
+          $storageAccount = "${{ secrets.AZURE_STORAGE_ACCOUNT }}"
+          $sasToken = "${{ secrets.AZURE_SAS_TOKEN }}"
+          $baseUrl = "https://$storageAccount.z20.web.core.windows.net"
+
+          $headers = @{ "x-ms-blob-type" = "BlockBlob" }
+
+          $indexJsonUrl = "$baseUrl/index.json`?$sasToken"
+          $indexHtmlUrl = "$baseUrl/index.html`?$sasToken"
+
+          Write-Host "⬆️ Subiendo index.json (historial)..."
+          Invoke-RestMethod -Method Put `
+            -Uri $indexJsonUrl `
+            -Headers $headers `
+            -InFile "index.json" `
+            -ContentType "application/json"
+
+          Write-Host "⬆️ Subiendo index.html (portal maestro)..."
+          Invoke-RestMethod -Method Put `
+            -Uri $indexHtmlUrl `
+            -Headers $headers `
+            -InFile "index.html" `
+            -ContentType "text/html"
+
+          Write-Host "🌍 Portal maestro e historial actualizados correctamente en Azure."

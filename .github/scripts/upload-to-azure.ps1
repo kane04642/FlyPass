@@ -5,7 +5,7 @@ param(
 )
 
 Write-Host "🚀 Iniciando carga a Azure Static Website..."
-Write-Host "📁 Carpeta: $BuildFolder"
+Write-Host "📁 Carpeta local: $BuildFolder"
 Write-Host "☁️ Storage Account: $StorageAccount"
 
 if (-not (Test-Path $BuildFolder)) {
@@ -13,15 +13,14 @@ if (-not (Test-Path $BuildFolder)) {
     exit 1
 }
 
-# Endpoint Azure Static Website
+# Endpoint de Static Website
 $baseUrl = "https://$StorageAccount.z20.web.core.windows.net"
 
-# Recorrer todos los archivos del build
 $files = Get-ChildItem -Path $BuildFolder -Recurse -File
 
 foreach ($file in $files) {
 
-    # Obtener ruta relativa para mantener estructura
+    # Ruta relativa dentro del contenedor $web
     $relativePath = $file.FullName.Replace((Resolve-Path $BuildFolder), "").TrimStart("\").Replace("\", "/")
 
     $uploadUrl = "$baseUrl/$relativePath`?$SasToken"
@@ -42,7 +41,7 @@ foreach ($file in $files) {
         Write-Host "   ✔ OK"
 
     } catch {
-        Write-Host "   ❌ Error subiendo $relativePath: $_"
+        Write-Host "   ❌ Error subiendo ${relativePath}: $_"
     }
 }
 

@@ -4,9 +4,9 @@ param(
     [string]$Storage
 )
 
-Write-Host "📄 Generando HTML principal..."
+Write-Host "📄 Generando HTML principal para el build $BuildName ..."
 
-# Plantilla HTML
+# Plantilla HTML principal por build
 $html = @"
 <!DOCTYPE html>
 <html>
@@ -19,7 +19,6 @@ body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
 h1 { color: #2c3e50; }
 .btn { display: inline-block; padding: 10px 20px; margin: 10px; background: #3498db; color: white; text-decoration: none; border-radius: 4px; }
 .btn-success { background: #27ae60; }
-.btn-warning { background: #f39c12; }
 </style>
 </head>
 
@@ -31,7 +30,6 @@ h1 { color: #2c3e50; }
 
 <div>
 <a href="https://$Storage.z20.web.core.windows.net/$BuildFolder/serenity/index.html" class="btn btn-success">Reporte Serenity</a>
-<a href="https://$Storage.z20.web.core.windows.net/$BuildFolder/jacoco/index.html" class="btn btn-warning">Reporte Jacoco</a>
 <a href="https://$Storage.z20.web.core.windows.net/$BuildFolder/diagnostic.html" class="btn">Diagnóstico</a>
 </div>
 
@@ -40,7 +38,7 @@ h1 { color: #2c3e50; }
 </html>
 "@
 
-# Guardar archivo
+# Guardar HTML en la carpeta del build
 $path = Join-Path $BuildFolder "index.html"
 Set-Content -Path $path -Value $html -Encoding UTF8
 
