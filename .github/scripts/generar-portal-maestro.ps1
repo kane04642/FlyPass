@@ -11,7 +11,7 @@ $builds = $BuildsListJson | ConvertFrom-Json
 # Ordenar por fecha descendente
 $builds = $builds | Sort-Object Fecha -Descending
 
-# Construir HTML del portal maestro
+# Construir HTML
 $html = @"
 <!DOCTYPE html>
 <html>
@@ -53,6 +53,7 @@ tr:hover { background: #f9f9f9; }
 foreach ($b in $builds) {
 
     $serenity = "https://$($b.Storage).z20.web.core.windows.net/$($b.Carpeta)/serenity/index.html"
+    $jacoco   = "https://$($b.Storage).z20.web.core.windows.net/$($b.Carpeta)/jacoco/index.html"
     $diag     = "https://$($b.Storage).z20.web.core.windows.net/$($b.Carpeta)/diagnostic.html"
 
     $html += @"
@@ -62,6 +63,7 @@ foreach ($b in $builds) {
 <td>$($b.SHA)</td>
 <td>
     <a href='$serenity' target='_blank'>Serenity</a> |
+    <a href='$jacoco' target='_blank'>Jacoco</a> |
     <a href='$diag' target='_blank'>Diagnóstico</a>
 </td>
 </tr>
