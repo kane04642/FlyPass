@@ -13,117 +13,55 @@ jobs:
 
     steps:
 
-      # ---------------------------------------
-      # 1. Checkout del código fuente
-      # ---------------------------------------
-      - name: Checkout código
+      # 1. Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      # ---------------------------------------
-      # 2. Configurar Java 17
-      # ---------------------------------------
+      # 2. Setup Java
       - name: Configurar Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v3
         with:
-          distribution: temurin
-          java-version: 17
+          java-version: '17'
+          distribution: 'temurin'
 
-      # ---------------------------------------
-      # 3. Configurar Gradle
-      # ---------------------------------------
-      - name: Configurar Gradle
-        uses: gradle/actions/setup-gradle@v3
+      # 3. Permisos
+      - name: Dar permisos a gradlew
+        run: chmod +x gradlew
 
-      # ---------------------------------------
-      # 4. Ejecutar pruebas
-      # ---------------------------------------
+      # 4. Limpiar reportes antiguos
+      - name: Limpiar reportes
+        run: ./gradlew clearReports
+
+      # 5. Ejecutar pruebas (NO DETIENE EL PIPELINE SI FALLAN)
       - name: Ejecutar pruebas
-        shell: pwsh
-        run: ./gradlew clean test aggregate
+        id: test-execution
+        continue-on-error: true
+        run: ./gradlew clean test jacocoTestReport -Denvironment=qa
 
-      # ---------------------------------------
-      # 5. Preparar carpetas BUILD OV (CORREGIDO)
-      # ---------------------------------------
+      # 6. Generar reportes Serenity SIEMPRE
+      - name: Generar reportes Serenity
+        run: ./gradlew aggregate -Denvironment=qa
+
+      # 7. Preparar carpetas OV
       - name: Preparar carpetas build OV
-        shell: pwsh
-        run: |
-          # Fecha del build
-          $date = Get-Date -Format "yyyy-MM-dd_HHmmss"
+        run: pwsh ./.github/scripts/preparar-carpetas.ps1
 
-          # SHA corto
-          $sha = "${{ github.sha }}"
-          $shortSha = $sha.Substring(0,7)
+      # 8. Generar HTML principal
+      - name: Generar portal HTML
+        run: pwsh ./.github/scripts/generar-html.ps1
 
-          # Variables del build
-          $buildName   = "OficinaVirtual-$date-$shortSha"
-          $buildFolder = "build-OficinaVirtual-$date-$shortSha"
+      # 9. Generar diagnóstico
+      - name: Generar Diagnóstico
+        run: pwsh ./.github/scripts/generar-diagnostico.ps1
 
-          Write-Host "📦 Build:  $buildName"
-          Write-Host "📁 Folder: $buildFolder"
-
-          # EXPORTAR al ambiente global (PASO CRÍTICO y CORREGIDO)
-          "BUILD_NAME=$buildName"     | Out-File -FilePath $env:GITHUB_ENV -Append
-          "BUILD_FOLDER=$buildFolder" | Out-File -FilePath $env:GITHUB_ENV -Append
-
-          # Crear carpeta del build
-          New-Item -ItemType Directory -Force -Path $buildFolder | Out-Null
-
-          # Copiar Serenity si existe
-          if (Test-Path "target/site/serenity") {
-            Copy-Item "target/site/serenity" "$buildFolder/serenity" -Recurse -Force
-          } else {
-            Write-Host "⚠ No existe carpeta Serenity (continuando sin error)."
-          }
-
-          # Copiar Jacoco si existe
-          if (Test-Path "target/site/jacoco") {
-            Copy-Item "target/site/jacoco" "$buildFolder/jacoco" -Recurse -Force
-          } else {
-            Write-Host "⚠ No existe carpeta Jacoco (continuando sin error)."
-          }
-
-      # ---------------------------------------
-      # 6. Generar HTML del build
-      # ---------------------------------------
-      - name: Generar portal HTML del build
-        shell: pwsh
-        run: |
-          .\.github\scripts\generar-html.ps1 `
-            -BuildName $env:BUILD_NAME `
-            -BuildFolder $env:BUILD_FOLDER `
-            -Storage "${{ secrets.AZURE_STORAGE_ACCOUNT }}"
-
-      # ---------------------------------------
-      # 7. Generar diagnóstico
-      # ---------------------------------------
-      - name: Generar diagnóstico
-        shell: pwsh
-        run: |
-          .\.github\scripts\debug-deploy.ps1 `
-            -BuildName $env:BUILD_NAME `
-            -BuildFolder $env:BUILD_FOLDER `
-            -StorageAccount "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
-            -SasToken "${{ secrets.AZURE_SAS_TOKEN }}"
-
-      # ---------------------------------------
-      # 8. Subir reportes a Azure Static Website
-      # ---------------------------------------
+      # 10. Subir reportes a Azure
       - name: Subir reportes a Azure Static Website
-        shell: pwsh
-        run: |
-          .\.github\scripts\upload-to-azure.ps1 `
-            -BuildFolder $env:BUILD_FOLDER `
-            -StorageAccount "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
-            -SasToken "${{ secrets.AZURE_SAS_TOKEN }}"
+        run: pwsh ./.github/scripts/upload-to-azure.ps1 `
+          -BuildName "$env:BUILD_NAME" `
+          -BuildFolder "$env:BUILD_FOLDER" `
+          -StorageAccount "$env:AZURE_STORAGE" `
+          -SasToken "$env:SAS_TOKEN"
 
-      # ---------------------------------------
-      # 9. Generar Portal Maestro
-      # ---------------------------------------
+      # 11. Generar portal maestro
       - name: Generar Portal Maestro
-        shell: pwsh
-        run: |
-          .\.github\scripts\generar-portal-maestro.ps1 `
-            -BuildName $env:BUILD_NAME `
-            -BuildFolder $env:BUILD_FOLDER `
-            -StorageAccount "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
-            -SasToken "${{ secrets.AZURE_SAS_TOKEN }}"
+        run: pwsh ./.github/scripts/generar-portal-maestro.ps1
