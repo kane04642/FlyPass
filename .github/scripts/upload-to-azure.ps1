@@ -5,9 +5,10 @@ param(
     [string]$SasToken
 )
 
-Write-Host "🚀 Subiendo portal a Azure Static Website usando AZCOPY..."
+Write-Host "🚀 Subiendo portal a Azure Static Website (sin eliminar archivos previos)..."
 
-if ([string]::IsNullOrWhiteSpace($BuildFolder) -or -not (Test-Path $BuildFolder)) {
+# Validaciones mínimas
+if (-not (Test-Path $BuildFolder)) {
     Write-Host "❌ ERROR: La carpeta del build no existe: $BuildFolder"
     exit 1
 }
@@ -25,25 +26,22 @@ if ([string]::IsNullOrWhiteSpace($SasToken)) {
 Write-Host "📁 Carpeta a subir: $BuildFolder"
 Write-Host "🌐 Storage Account: $StorageAccount"
 
-# === Descargar AzCopy ===
+# === Descargar AZCOPY ===
 Write-Host "⬇️ Descargando AzCopy..."
 Invoke-WebRequest -Uri "https://aka.ms/downloadazcopy-v10-windows" -OutFile "azcopy.zip"
-Expand-Archive azcopy.zip -DestinationPath "./azcopy" -Force
+Expand-Archive azcopy.zip -DestinationPath "./aztools" -Force
 
-$AzCopyExe = (Get-ChildItem -Path "./azcopy" -Recurse -Filter "azcopy.exe").FullName
-Write-Host "✔ AzCopy localizado en: $AzCopyExe"
+$AzCopyExe = (Get-ChildItem -Path "./aztools" -Recurse -Filter "azcopy.exe").FullName
+Unblock-File -Path $AzCopyExe
 
-# === Definir destino ===
+# === Destino ===
 $Destination = "https://$StorageAccount.blob.core.windows.net/`$web?$SasToken"
+
 Write-Host "📌 Destino Azure: $Destination"
 
-# === Eliminar archivos previos ===
-Write-Host "🧹 Limpiando destino anterior..."
-& $AzCopyExe rm $Destination --recursive=true
+# === SUBIR SIN BORRAR, SIN LISTAR ===
+Write-Host "📤 Subiendo nueva versión SIN eliminar contenido previo..."
+& $AzCopyExe copy "$BuildFolder/*" "$Destination" --recursive=true --overwrite=true --log-level=INFO
 
-# === Subir nuevos archivos ===
-Write-Host "📤 Subiendo nueva versión..."
-& $AzCopyExe copy "$BuildFolder/*" "$Destination" --recursive=true
-
-Write-Host "🎉 Publicación finalizada."
-Write-Host "🌍 Portal actualizado: https://$StorageAccount.z20.web.core.windows.net"
+Write-Host "🎉 Publicación finalizada (sin borrar archivos previos)"
+Write-Host "🌍 Portal accesible en: https://$StorageAccount.z20.web.core.windows.net"
