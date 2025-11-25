@@ -7,7 +7,6 @@ param(
 
 Write-Host "🚀 Subiendo portal a Azure Static Website usando AZCOPY..."
 
-# ===== VALIDACIONES =====
 if ([string]::IsNullOrWhiteSpace($BuildFolder) -or -not (Test-Path $BuildFolder)) {
     Write-Host "❌ ERROR: La carpeta del build no existe: $BuildFolder"
     exit 1
@@ -26,33 +25,25 @@ if ([string]::IsNullOrWhiteSpace($SasToken)) {
 Write-Host "📁 Carpeta a subir: $BuildFolder"
 Write-Host "🌐 Storage Account: $StorageAccount"
 
-# ===== DESCARGAR AZCOPY =====
+# === Descargar AzCopy ===
 Write-Host "⬇️ Descargando AzCopy..."
-
 Invoke-WebRequest -Uri "https://aka.ms/downloadazcopy-v10-windows" -OutFile "azcopy.zip"
 Expand-Archive azcopy.zip -DestinationPath "./azcopy" -Force
 
 $AzCopyExe = (Get-ChildItem -Path "./azcopy" -Recurse -Filter "azcopy.exe").FullName
+Write-Host "✔ AzCopy localizado en: $AzCopyExe"
 
-Write-Host "✔ AzCopy listo en: $AzCopyExe"
-
-# ===== DEFINIR DESTINO =====
+# === Definir destino ===
 $Destination = "https://$StorageAccount.blob.core.windows.net/`$web?$SasToken"
-
 Write-Host "📌 Destino Azure: $Destination"
 
-# ===== ELIMINAR ARCHIVOS ANTIGUOS DEL $web =====
-Write-Host "🧹 Eliminando contenido anterior del sitio..."
-
+# === Eliminar archivos previos ===
+Write-Host "🧹 Limpiando destino anterior..."
 & $AzCopyExe rm $Destination --recursive=true
 
-Write-Host "✔ Contenido anterior eliminado."
-
-# ===== SUBIR NUEVO CONTENIDO =====
-Write-Host "📤 Subiendo nueva versión del portal..."
-
+# === Subir nuevos archivos ===
+Write-Host "📤 Subiendo nueva versión..."
 & $AzCopyExe copy "$BuildFolder/*" "$Destination" --recursive=true
 
-Write-Host "🎉 Publicación completada correctamente."
-Write-Host "🌍 URL DEL PORTAL ACTUALIZADO:"
-Write-Host "👉 https://$StorageAccount.z20.web.core.windows.net"
+Write-Host "🎉 Publicación finalizada."
+Write-Host "🌍 Portal actualizado: https://$StorageAccount.z20.web.core.windows.net"
