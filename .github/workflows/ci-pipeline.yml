@@ -17,47 +17,20 @@ jobs:
 
     steps:
 
+      # 1. Descarga del código
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 2. Configurar Java 17
       - name: Configurar Java 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
 
+      # 3. Permisos Gradle
       - name: Dar permisos a gradlew
         run: chmod +x gradlew
 
-      - name: Limpiar reportes
-        run: ./gradlew clearReports
-
-      - name: Ejecutar pruebas
-        continue-on-error: true
-        run: ./gradlew clean test jacocoTestReport -Denvironment=qa
-
-      - name: Generar reportes Serenity
-        run: ./gradlew aggregate -Denvironment=qa
-
-      - name: Preparar carpetas build OV
-        shell: pwsh
-        run: pwsh ./.github/scripts/preparar-carpetas.ps1
-
-      - name: Generar portal HTML
-        shell: pwsh
-        run: pwsh ./.github/scripts/generar-html.ps1
-
-      # ❌ Eliminado: Generar Diagnóstico
-
-      - name: Subir reportes a Azure
-        shell: pwsh
-        run: |
-          pwsh ./.github/scripts/upload-to-azure.ps1 `
-            -BuildName "$env:BUILD_NAME" `
-            -BuildFolder "$env:BUILD_FOLDER" `
-            -StorageAccount "$env:AZURE_STORAGE" `
-            -SasToken "$env:SAS_TOKEN"
-
-      - name: Generar Portal Maestro
-        shell: pwsh
-        run: pwsh ./.github/scripts/generar-portal-maestro.ps1
+      # 4. Limpiar reportes previos
+      - name: Limpiar
