@@ -44,5 +44,8 @@ public class Login  extends PageObject {
     public static final Target TXT_CLAVE_CON_EMPRESA= Target.the("Ingresar confirmar clave de nueva empresa").located(By.xpath("//input[@formcontrolname='businessConfirmPassword']"));
     public static final Target TXT_NoCLIENTE_EMPRESA= Target.the("Ingresar Nro cliente empresa").located(By.xpath("//input[@formcontrolname='businessCode']"));
     public static final Target TXT_NoRECIBO_EMPRESA= Target.the("Ingresar Nro recibo empresa").located(By.xpath("//input[@formcontrolname='businessReceiptNumber']"));
+    public static final Target LIS_TIPO_DOCUMENTO= Target.the("Click en tipo de documento").located(By.cssSelector("#mat-select-0"));
+    public static final Target SLC_TIPO_DOCUMENTO= Target.the("Seleccionar el tipo de documento").locatedBy("//mat-option[contains(.,'{0}')]");
+    public static final Target TXT_No_DOCUMENTO= Target.the("Ingresar Nro de documento del titular").located(By.xpath("//input[@formcontrolname='clientDocumentNumber']"));
 
 }

@@ -9,6 +9,8 @@ import net.serenitybdd.screenplay.waits.WaitUntil;
 import java.util.Map;
 
 import static com.calidda.ov.userinterface.Login.*;
+import static com.calidda.ov.userinterface.reclamoCliente.ReclamosPOM.LIS_TIPO_DOCU_REPRE;
+import static com.calidda.ov.userinterface.reclamoCliente.ReclamosPOM.SLC_TIPO_DOCU_REPRE;
 import static net.serenitybdd.screenplay.Tasks.instrumented;
 import static net.serenitybdd.screenplay.matchers.WebElementStateMatchers.isPresent;
 
@@ -32,13 +34,16 @@ public class RegistrarCliente implements Task {
                 Click.on(BTN_REGISTRARME),
                 WaitUntil.the(TXT_NOMBRE_APELLIDO, isPresent()).forNoMoreThan(10).seconds(),
                 Enter.theValue(registroCliente.get("NombreApellido")).into(TXT_NOMBRE_APELLIDO),
+                Click.on(LIS_TIPO_DOCUMENTO),
+                Click.on(SLC_TIPO_DOCUMENTO.of(registroCliente.get("tipoDocumento"))),
+                Enter.theValue(registroCliente.get("NoDocumento")).into(TXT_No_DOCUMENTO),
                 Enter.theValue(registroCliente.get("email")).into(TXT_EMAIL),
                 Enter.theValue(registroCliente.get("telefono")).into(TXT_TELEFONO_REGISTRO),
                 Enter.theValue(registroCliente.get("celular")).into(TXT_CELULAR),
                 Enter.theValue(registroCliente.get("clave")).into(TXT_CLAVE_REGISTRO),
                 Enter.theValue(registroCliente.get("confirmarClave")).into(TXT_CLAVE_CONFIRMAR),
                 Enter.theValue(registroCliente.get("numCliente")).into(TXT_NUM_CLIENTE),
-                Enter.theValue(registroCliente.get("numRecibo")).into(TXT_NUM_RECIBO),
+                //Enter.theValue(registroCliente.get("numRecibo")).into(TXT_NUM_RECIBO),
                 WaitUntil.the(CHK_POLI_WEB, isPresent()).forNoMoreThan(10).seconds(),
                 Click.on(CHK_POLI_WEB),
                 //Click.on(CHK_FINES_COMER),

@@ -31,7 +31,7 @@ public class RegistrarEmpresa implements Task {
                 Enter.theValue(datosEmpresa.get("clave")).into(TXT_CLAVE_EMPRESA),
                 Enter.theValue(datosEmpresa.get("confirmarClave")).into(TXT_CLAVE_CON_EMPRESA),
                 Enter.theValue(datosEmpresa.get("numCliente")).into(TXT_NoCLIENTE_EMPRESA),
-                Enter.theValue(datosEmpresa.get("numRecibo")).into(TXT_NoRECIBO_EMPRESA),
+               // Enter.theValue(datosEmpresa.get("numRecibo")).into(TXT_NoRECIBO_EMPRESA),
                 Click.on(CHK_POLI_WEB),
                 Click.on(BTN_REGIS_USUARIO)
         );

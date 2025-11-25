@@ -12,22 +12,38 @@ jobs:
     runs-on: windows-latest
 
     steps:
+
+      # ---------------------------------------
+      # 1. Checkout del código fuente
+      # ---------------------------------------
       - name: Checkout código
         uses: actions/checkout@v4
 
+      # ---------------------------------------
+      # 2. Configurar Java 17
+      # ---------------------------------------
       - name: Configurar Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
+      # ---------------------------------------
+      # 3. Configurar Gradle
+      # ---------------------------------------
       - name: Configurar Gradle
-        uses: gradle/gradle-build-action@v3
+        uses: gradle/actions/setup-gradle@v3
 
+      # ---------------------------------------
+      # 4. Ejecutar pruebas
+      # ---------------------------------------
       - name: Ejecutar pruebas
         shell: pwsh
         run: ./gradlew clean test aggregate
 
+      # ---------------------------------------
+      # 5. Preparar carpetas BUILD OV (CORREGIDO)
+      # ---------------------------------------
       - name: Preparar carpetas build OV
         shell: pwsh
         run: |
@@ -39,34 +55,36 @@ jobs:
           $shortSha = $sha.Substring(0,7)
 
           # Variables del build
-          $env:BUILD_NAME   = "OficinaVirtual-$date-$shortSha"
-          $env:BUILD_FOLDER = "build-OficinaVirtual-$date-$shortSha"
+          $buildName   = "OficinaVirtual-$date-$shortSha"
+          $buildFolder = "build-OficinaVirtual-$date-$shortSha"
 
-          Write-Host "📦 Build:  $env:BUILD_NAME"
-          Write-Host "📁 Folder: $env:BUILD_FOLDER"
+          Write-Host "📦 Build:  $buildName"
+          Write-Host "📁 Folder: $buildFolder"
 
-          # Crear carpeta principal
-          New-Item -ItemType Directory -Force -Path $env:BUILD_FOLDER | Out-Null
+          # EXPORTAR al ambiente global (PASO CRÍTICO y CORREGIDO)
+          "BUILD_NAME=$buildName"     | Out-File -FilePath $env:GITHUB_ENV -Append
+          "BUILD_FOLDER=$buildFolder" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-          # === COPIA DE REPORTES ===
-          # SERENITY
+          # Crear carpeta del build
+          New-Item -ItemType Directory -Force -Path $buildFolder | Out-Null
+
+          # Copiar Serenity si existe
           if (Test-Path "target/site/serenity") {
-            Write-Host "➡ Copiando Serenity..."
-            Copy-Item "target/site/serenity" "$env:BUILD_FOLDER/serenity" -Recurse -Force
-          }
-          else {
-            Write-Host "⚠ No existe target/site/serenity — se omite."
+            Copy-Item "target/site/serenity" "$buildFolder/serenity" -Recurse -Force
+          } else {
+            Write-Host "⚠ No existe carpeta Serenity (continuando sin error)."
           }
 
-          # JACOCO (OPCIONAL)
+          # Copiar Jacoco si existe
           if (Test-Path "target/site/jacoco") {
-            Write-Host "➡ Copiando Jacoco..."
-            Copy-Item "target/site/jacoco" "$env:BUILD_FOLDER/jacoco" -Recurse -Force
-          }
-          else {
-            Write-Host "⚠ No existe target/site/jacoco — se omite (NO ES UN ERROR)."
+            Copy-Item "target/site/jacoco" "$buildFolder/jacoco" -Recurse -Force
+          } else {
+            Write-Host "⚠ No existe carpeta Jacoco (continuando sin error)."
           }
 
+      # ---------------------------------------
+      # 6. Generar HTML del build
+      # ---------------------------------------
       - name: Generar portal HTML del build
         shell: pwsh
         run: |
@@ -75,6 +93,9 @@ jobs:
             -BuildFolder $env:BUILD_FOLDER `
             -Storage "${{ secrets.AZURE_STORAGE_ACCOUNT }}"
 
+      # ---------------------------------------
+      # 7. Generar diagnóstico
+      # ---------------------------------------
       - name: Generar diagnóstico
         shell: pwsh
         run: |
@@ -84,6 +105,9 @@ jobs:
             -StorageAccount "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
             -SasToken "${{ secrets.AZURE_SAS_TOKEN }}"
 
+      # ---------------------------------------
+      # 8. Subir reportes a Azure Static Website
+      # ---------------------------------------
       - name: Subir reportes a Azure Static Website
         shell: pwsh
         run: |
@@ -92,9 +116,14 @@ jobs:
             -StorageAccount "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
             -SasToken "${{ secrets.AZURE_SAS_TOKEN }}"
 
+      # ---------------------------------------
+      # 9. Generar Portal Maestro
+      # ---------------------------------------
       - name: Generar Portal Maestro
         shell: pwsh
         run: |
           .\.github\scripts\generar-portal-maestro.ps1 `
+            -BuildName $env:BUILD_NAME `
+            -BuildFolder $env:BUILD_FOLDER `
             -StorageAccount "${{ secrets.AZURE_STORAGE_ACCOUNT }}" `
             -SasToken "${{ secrets.AZURE_SAS_TOKEN }}"

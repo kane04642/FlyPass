@@ -16,11 +16,13 @@ Característica: :Registro de un nuevo cliente
       | confirmarClave | <confirmarClave> |
       | numCliente     | <numCliente>     |
       | numRecibo      | <numRecibo>      |
+      | tipoDocumento  | <tipoDocumento>  |
+      | NoDocumento    | <NoDocumento>    |
 
     Entonces el usuario valida boton de error en recibo no valido
     Ejemplos:
-      | NombreApellido | email            | telefono | celular   | clave        | confirmarClave | numCliente | numRecibo |
-      | lucas lucas    | lucas@correo.com | 2287897  | 999778844 | Contrasena1* | Contrasena1*   | 123456     | 123456    |
+      | NombreApellido | email            | telefono | celular   | clave        | confirmarClave | numCliente | numRecibo | tipoDocumento | NoDocumento |
+      | lucas lucas    | lucas@correo.com | 2287897  | 999778844 | Contrasena1* | Contrasena1*   | 123456     | 123456    | DNI           | 22554477    |
 
   @Registrar @OV_TC94 @regresion
   Esquema del escenario: : Registro sin diligenciar los campos obligatorios
