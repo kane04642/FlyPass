@@ -4,32 +4,41 @@ param(
     [string]$SourceFolder
 )
 
-Write-Host "🚀 Subiendo TODOS los archivos de Serenity a carpeta /serenity/ en Static Website..."
+Write-Host "🚀 Subiendo TODOS los archivos de Serenity a AZURE Static Website..."
 
+# Normalizar SAS
 if ($SasToken.StartsWith("?") -eq $false) {
     $SasToken = "?" + $SasToken
 }
 
 $container = '$web'
 
-if (!(Test-Path $SourceFolder)) {
-    Write-Host "❌ ERROR: No existe la carpeta Serenity: $SourceFolder"
-    exit 1
-}
+# Convertir SourceFolder a ruta absoluta real
+$absoluteSource = Resolve-Path $SourceFolder
+$absoluteSource = $absoluteSource.Path
 
-$files = Get-ChildItem -Path $SourceFolder -Recurse -File
+Write-Host "📁 Carpeta absoluta origen: $absoluteSource"
+
+# Obtener todos los archivos del reporte
+$files = Get-ChildItem -Path $absoluteSource -Recurse -File
 
 foreach ($file in $files) {
 
-    $relativePath = $file.FullName.Replace($SourceFolder, "").TrimStart("\","/")
-    $relativePath = "serenity/" + $relativePath  # 📌 Subcarpeta obligatoria
+    # Ruta relativa correcta, sin unidad ni drive
+    $relativePath = $file.FullName.Replace($absoluteSource, "").TrimStart('\','/')
 
-    $blobUrl = "https://$StorageAccount.blob.core.windows.net/$container/$relativePath$SasToken"
+    # Subcarpeta "serenity/"
+    $relativePath = "serenity/" + $relativePath
 
     Write-Host "📤 Subiendo: $relativePath"
 
+    # Leer bytes
     $bytes = [System.IO.File]::ReadAllBytes($file.FullName)
 
+    # Construir URL final
+    $blobUrl = "https://$StorageAccount.blob.core.windows.net/$container/$relativePath$SasToken"
+
+    # Headers
     $headers = @{
         "x-ms-blob-type" = "BlockBlob"
         "Content-Type"   = "application/octet-stream"
@@ -39,11 +48,11 @@ foreach ($file in $files) {
         Invoke-RestMethod -Uri $blobUrl -Method Put -Headers $headers -Body $bytes
     }
     catch {
-        Write-Host "❌ ERROR SUBIENDO"
-        Write-Host $_
+        Write-Host "❌ ERROR SUBIENDO ARCHIVO $relativePath"
+        Write-Host $_.Exception.Message
         exit 1
     }
 }
 
-Write-Host "🎉 Reporte Serenity SUBIDO en:"
+Write-Host "🎉 Reporte Serenity SUBIDO:"
 Write-Host "👉 https://$StorageAccount.z20.web.core.windows.net/serenity/index.html"
