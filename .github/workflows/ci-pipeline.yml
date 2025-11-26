@@ -25,7 +25,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Dar permisos a gradlew
+      - name: Permisos Gradlew
         run: chmod +x gradlew
 
       - name: Limpiar reportes previos
@@ -35,7 +35,7 @@ jobs:
         continue-on-error: true
         run: ./gradlew clean test aggregate -Denvironment=qa
 
-      - name: Subir reporte Serenity a Azure Static Website
+      - name: Subir Reporte Serenity COMPLETO a Azure
         shell: pwsh
         run: |
           pwsh ./.github/scripts/upload-serenity.ps1 `

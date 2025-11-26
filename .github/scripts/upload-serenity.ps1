@@ -4,46 +4,73 @@ param(
     [string]$SourceFolder
 )
 
-Write-Host "🚀 Subiendo reporte Serenity al Azure Static Website..."
+Write-Host "🚀 Subiendo TODO el reporte Serenity al Azure Static Website..."
 
-# Convertir SAS a formato correcto (agregar ? al inicio si falta)
+# Asegurar formato del SAS
 if ($SasToken.StartsWith("?") -eq $false) {
     $SasToken = "?" + $SasToken
 }
 
-$container = "\$web"
+# Contenedor estático obligatorio
+$container = '$web'
 
-# SERENITY REPORT DIRECTORIO
-$indexFile = Join-Path $SourceFolder "index.html"
-
-if (!(Test-Path $indexFile)) {
-    Write-Host "❌ ERROR: No se encontró el archivo index.html de Serenity en $SourceFolder"
+# Validar directorio origen
+if (!(Test-Path $SourceFolder)) {
+    Write-Host "❌ ERROR: No existe la carpeta de Serenity: $SourceFolder"
     exit 1
 }
 
-Write-Host "📄 Archivo Serenity encontrado: $indexFile"
+Write-Host "📁 Carpeta origen: $SourceFolder"
 
-# Leer contenido del index
-$fileContent = Get-Content -Path $indexFile -Raw
-$byteArray = [System.Text.Encoding]::UTF8.GetBytes($fileContent)
+# Obtener todos los archivos del reporte (recursivo)
+$files = Get-ChildItem -Path $SourceFolder -Recurse -File
 
-# Construir URL final
-$blobUrl = "https://$StorageAccount.blob.core.windows.net/$container/index.html$SasToken"
+foreach ($file in $files) {
 
-Write-Host "🌐 URL destino: $blobUrl"
+    # Construir ruta relativa
+    $relativePath = $file.FullName.Replace($SourceFolder, "").TrimStart("\","/")
 
-# Headers obligatorios
-$headers = @{
-    "x-ms-blob-type" = "BlockBlob"
-    "Content-Type"  = "text/html"
+    # Construir URL final
+    $blobUrl = "https://$StorageAccount.blob.core.windows.net/$container/$relativePath$SasToken"
+
+    Write-Host "📤 Subiendo: $relativePath"
+
+    # Leer bytes
+    $bytes = [System.IO.File]::ReadAllBytes($file.FullName)
+
+    # Detectar MIME-Type
+    $contentType = "application/octet-stream"
+    $ext = $file.Extension.ToLower()
+
+    switch ($ext) {
+        ".html" { $contentType = "text/html" }
+        ".js"   { $contentType = "application/javascript" }
+        ".css"  { $contentType = "text/css" }
+        ".json" { $contentType = "application/json" }
+        ".png"  { $contentType = "image/png" }
+        ".jpg"  { $contentType = "image/jpeg" }
+        ".jpeg" { $contentType = "image/jpeg" }
+        ".svg"  { $contentType = "image/svg+xml" }
+        ".woff" { $contentType = "font/woff" }
+        ".woff2"{ $contentType = "font/woff2" }
+    }
+
+    # Headers necesarios
+    $headers = @{
+        "x-ms-blob-type" = "BlockBlob"
+        "Content-Type"   = $contentType
+    }
+
+    # Subir archivo
+    try {
+        Invoke-RestMethod -Uri $blobUrl -Method Put -Headers $headers -Body $bytes
+    }
+    catch {
+        Write-Host "❌ ERROR al subir $relativePath"
+        Write-Host $_
+        exit 1
+    }
 }
 
-try {
-    Invoke-RestMethod -Uri $blobUrl -Method Put -Headers $headers -Body $byteArray
-    Write-Host "🎉 Serenity Report subido correctamente."
-}
-catch {
-    Write-Host "❌ ERROR SUBIENDO ARCHIVO:"
-    Write-Host $_
-    exit 1
-}
+Write-Host "🎉 Reporte Serenity COMPLETO subido exitosamente."
+Write-Host "🌍 Disponible en: https://$StorageAccount.z20.web.core.windows.net/"
