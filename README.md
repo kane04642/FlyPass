@@ -1,6 +1,6 @@
-# 🧪 Automatización Web — Oficina Virtual (Calidda)
+# 🧪 Automatización Web — Orange
     Framework de automatización desarrollado en **Java 17**, utilizando **Serenity BDD**, **Screenplay**, **Cucumber**, **Gradle**, y el patrón **Page Object Model (POM)**.  
-    Este proyecto automatiza los principales flujos funcionales del portal **Oficina Virtual** de Calidda.
+
     
     ---
 
@@ -20,7 +20,7 @@
 ## 📁 Estructura del Proyecto
         src
         ├── main
-        │ └── java/com/calidda/ov
+        │ └── java/com/davivienda/orange
         │ ├── constantes
         │ ├── interactions
         │ ├── questions
@@ -28,25 +28,14 @@
         │ └── userinterface
         │
         └── test
-        ├── java/com/calidda/ov
+        ├── java/com/davivienda/orange
         │ ├── runners
         │ └── stepdefinitions
         │ ├── consultaCupo
         │ ├── hooks
-        │ ├── pagoRecibos
-        │ ├── reclamoCliente
-        │ ├── reclamoNoCliente
-        │ └── registro
         │
         └── resources/features
-        ├── ConsultaCupo.feature
         ├── Login.feature
-        ├── PagoRecibo.feature
-        ├── PagoRecibos.feature
-        ├── ReclamoCliente.feature
-        ├── ReclamoNoCliente.feature
-        └── RegistrarCliente.feature
-
 
 ---
 
@@ -91,10 +80,7 @@ Los step definitions orquestan las interacciones con Screenplay.
 ### Ambientes configurados:
         default
         qa
-        qa_Virtual
         dev
-        noCliente
-
 
 ---
     
