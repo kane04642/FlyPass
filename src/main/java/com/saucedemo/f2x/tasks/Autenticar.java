@@ -1,29 +1,26 @@
-package com.davivienda.orange.tasks;
+package com.saucedemo.f2x.tasks;
 
-import com.davivienda.orange.interactions.Esperar;
 import net.serenitybdd.core.Serenity;
 import net.serenitybdd.model.environment.EnvironmentSpecificConfiguration;
 import net.serenitybdd.screenplay.Actor;
 import net.serenitybdd.screenplay.Task;
 import net.serenitybdd.screenplay.actions.Click;
 import net.serenitybdd.screenplay.actions.Enter;
-import net.serenitybdd.screenplay.waits.WaitUntil;
 import net.thucydides.model.util.EnvironmentVariables;
 
-import static com.davivienda.orange.userinterface.Login.*;
+import static com.saucedemo.f2x.userinterface.Login.*;
 import static net.serenitybdd.screenplay.Tasks.instrumented;
-import static net.serenitybdd.screenplay.matchers.WebElementStateMatchers.isPresent;
 
-public class AutenticarOV implements Task {
+public class Autenticar implements Task {
 
     private final String actorName;
     private EnvironmentVariables environmentVariables;
-    public AutenticarOV(String actorName) {
+    public Autenticar(String actorName) {
         this.actorName = actorName;
     }
 
-    public static AutenticarOV cloud(String actorName){
-        return instrumented(AutenticarOV.class, actorName);
+    public static Autenticar cloud(String actorName){
+        return instrumented(Autenticar.class, actorName);
     }
 
     @Override
@@ -37,17 +34,11 @@ public class AutenticarOV implements Task {
                 .getProperty(passwordKey);
 
         actor.attemptsTo(
-                WaitUntil.the(BTN_COOKIES, isPresent()).forNoMoreThan(25).seconds(),
-                Click.on(BTN_COOKIES),
-                Enter.keyValues(username).into(TXT_USER),
-                Enter.keyValues(password).into(TXT_CLAVE),
-                Click.on(BTN_INICIAR_SESION),
-                Esperar.unTiempo(15)/*,
-                WaitUntil.the(BTN_ACTUALIZAR, isPresent()).forNoMoreThan(40).seconds(),
-                Click.on(BTN_ACTUALIZAR),
-                Scroll.to(TXT_NUMERO),
-                Enter.keyValues("123134").into(TXT_NUMERO)
-                */
+
+                Enter.keyValues(username).into(TXT_USERNAME),
+                Enter.keyValues(password).into(TXT_PASSWORD),
+                Click.on(BTN_LOGIN)
+
                 );
         Serenity.takeScreenshot();
 

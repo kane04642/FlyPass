@@ -1,4 +1,4 @@
-package com.davivienda.orange.runners;
+package com.saucedemo.f2x.runners;
 
 import io.cucumber.junit.CucumberOptions;
 import net.serenitybdd.cucumber.CucumberWithSerenity;
@@ -8,7 +8,7 @@ import org.junit.runner.RunWith;
 @CucumberOptions(
         tags = "@Login",
         features = "src/test/resources/features",
-        glue = "com.calidda.ov"
+        glue = "com.saucedemo.f2x"
 )
 
 public class LoginRunner {

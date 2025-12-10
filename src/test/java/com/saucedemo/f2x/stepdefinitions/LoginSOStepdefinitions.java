@@ -1,8 +1,8 @@
-package com.davivienda.orange.stepdefinitions;
+package com.saucedemo.f2x.stepdefinitions;
 
-import com.davivienda.orange.questions.HomePageVisible;
-import com.davivienda.orange.tasks.AutenticarOV;
-import com.davivienda.orange.tasks.LoginOV;
+
+import com.saucedemo.f2x.tasks.Autenticar;
+import com.saucedemo.f2x.tasks.Login;
 import io.cucumber.java.es.Cuando;
 import io.cucumber.java.es.Dado;
 import io.cucumber.java.es.Entonces;
@@ -16,14 +16,14 @@ public class LoginSOStepdefinitions {
     public void el_usuario_navega_a_la_pagina_autenticador() {
 
         theActorInTheSpotlight().wasAbleTo(
-                LoginOV.cloud()
+                Login.cloud()
         );
     }
 
     @Cuando("el usuario ingresa las credenciales para autenticacion {string}")
     public void elUsuarioIngresaLasCredencialesParaAutenticacion(String actor) {
         theActorInTheSpotlight().wasAbleTo(
-                AutenticarOV.cloud(actor)
+                Autenticar.cloud(actor)
         );
     }
 
@@ -31,7 +31,7 @@ public class LoginSOStepdefinitions {
     public void elusuarioesperalapaginadehome() {
         theActorInTheSpotlight().
                 should(
-                        seeThat(HomePageVisible.isVisible())
+                        seeThat(com.saucedemo.f2x.questions.HomePageVisible.isVisible())
                 );
     }
 

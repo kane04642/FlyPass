@@ -59,7 +59,7 @@ dependencies {
 
 }
 
-group = 'com.grupoemi.seguridad'
+group = 'com.saucedemo.com'
 version = '1.0-SNAPSHOT'
 description = 'Seguridad'
 java.sourceCompatibility = JavaVersion.VERSION_17

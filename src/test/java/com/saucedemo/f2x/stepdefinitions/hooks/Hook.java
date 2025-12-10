@@ -1,4 +1,4 @@
-package com.davivienda.orange.stepdefinitions.hooks;
+package com.saucedemo.f2x.stepdefinitions.hooks;
 
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
