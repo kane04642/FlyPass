@@ -1,8 +1,11 @@
 package com.saucedemo.f2x.stepdefinitions.agregarProductos;
 
+import com.saucedemo.f2x.questions.validarNoProductos.CantidadEnCarrito;
 import com.saucedemo.f2x.tasks.ValidarCarrito.ValidarProductoEnCarrito;
 import com.saucedemo.f2x.tasks.agregarProducto.AgregarProducto;
 import io.cucumber.java.es.Cuando;
+import io.cucumber.java.es.Entonces;
+import net.serenitybdd.screenplay.ensure.Ensure;
 
 import java.util.Map;
 
@@ -25,6 +28,15 @@ public class AgregarProductoSteps {
                 theActorInTheSpotlight().attemptsTo(
                         ValidarProductoEnCarrito.conNombre(nombreProducto)
                 )
+        );
+    }
+
+    @Entonces("el usuario valida la cantidad de productos en el carrito")
+    public void elUsuarioValidaLaCantidadDeProductosEnElCarrito(Map<String, String> producto) {
+        int cantidadEsperada = producto.size();
+
+        theActorInTheSpotlight().attemptsTo(
+                Ensure.that(CantidadEnCarrito.valor()).isEqualTo(cantidadEsperada)
         );
     }
 }

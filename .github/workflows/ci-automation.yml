@@ -1,0 +1,53 @@
+name: CI Pipeline - Automatización QA
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  ejecutar-automatizacion:
+    runs-on: windows-latest
+
+    steps:
+      # 1. Checkout del código
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      # 2. Configurar Java 17
+      - name: Configurar Java JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # 3. Hacer ejecutable el gradlew
+      - name: Dar permisos al Gradlew
+        run: |
+          git update-index --chmod=+x gradlew
+
+      # 4. Limpiar reportes previos
+      - name: Limpiar reportes anteriores
+        run: ./gradlew clearReports
+
+      # 5. Ejecutar las pruebas automatizadas
+      - name: Ejecutar pruebas Serenity con Gradle
+        continue-on-error: true
+        run: ./gradlew clean test aggregate -Denvironment=qa
+
+      # 6. Publicar los reportes Serenity como artefacto descargable
+      - name: Publicar reporte Serenity
+        uses: actions/upload-artifact@v4
+        with:
+          name: serenity-report
+          path: target/site/serenity
+          retention-days: 7
+
+      # 7. Publicar logs y resultados de Gradle
+      - name: Publicar logs de ejecución
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: build/reports/tests/test
+          retention-days: 7

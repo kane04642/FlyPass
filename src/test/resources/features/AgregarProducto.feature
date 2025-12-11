@@ -14,6 +14,9 @@ Característica: Agregar un producto al carrito de compra
     Cuando el usuario valida  los productos en el carrito de compras
       | producto1 | <producto1> |
       | producto2 | <producto2> |
+    Entonces el usuario valida la cantidad de productos en el carrito
+      | producto1 | <producto1> |
+      | producto2 | <producto2> |
 
     Ejemplos:
       | test_case                           | producto1           | producto2                | actor         |

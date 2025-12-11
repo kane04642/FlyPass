@@ -20,7 +20,7 @@
 ## 📁 Estructura del Proyecto
         src
         ├── main
-        │ └── java/com/davivienda/orange
+        │ └── java/com/saucedemo/f2x
         │ ├── constantes
         │ ├── interactions
         │ ├── questions
@@ -28,10 +28,9 @@
         │ └── userinterface
         │
         └── test
-        ├── java/com/davivienda/orange
+        ├── java/com/saucedemo/f2x
         │ ├── runners
         │ └── stepdefinitions
-        │ ├── consultaCupo
         │ ├── hooks
         │
         └── resources/features
@@ -55,7 +54,7 @@
       - Escalabilidad
 
 ### 🔹 **Page Object Model (POM)**
-        Los componentes visuales están gestionados usando `Target` dentro del paquete:
+        Los componentes visuales están gestionados usando `Target` dentro del paquete
 
 ### 🔹 **BDD con Cucumber**
     Los escenarios siguen Gherkin y están ubicados en:
@@ -116,6 +115,10 @@ Los step definitions orquestan las interacciones con Screenplay.
         ✔ Serenity Report
         Ruta:
         target/site/serenity/index.html
+
+## 🧱 Propuesta de CI/CD
+
+    Se propone archivo .yml ubicado en .github/workflows/ci-automation.yml (con descripcion de los pasos basicos) el cual usara gitActions para ejecutar la automatizaciòn desde un servidor dedicado
 
     👤 Autor
     

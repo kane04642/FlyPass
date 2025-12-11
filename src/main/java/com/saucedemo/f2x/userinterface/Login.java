@@ -36,4 +36,8 @@ public class Login  extends PageObject {
     public static final Target LNK_CARRITO = Target.the("Link carrito de compras")
             .located(By.id("shopping_cart_container"));
 
+    public static final Target BADGE_CARRITO = Target.the("Cantidad de productos en el carrito")
+            .located(By.cssSelector("[data-test='shopping-cart-badge']"));
+
+
 }
