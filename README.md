@@ -1,4 +1,4 @@
-# 🧪 Automatización Web — Orange
+# 🧪 Automatización Web — FlyPass
     Framework de automatización desarrollado en **Java 17**, utilizando **Serenity BDD**, **Screenplay**, **Cucumber**, **Gradle**, y el patrón **Page Object Model (POM)**.  
 
     
@@ -124,4 +124,5 @@ Los step definitions orquestan las interacciones con Screenplay.
     
     Daniel Contreras
     QA Automation Engineer
+
     14+ años de experiencia en QA Manual & Automation
