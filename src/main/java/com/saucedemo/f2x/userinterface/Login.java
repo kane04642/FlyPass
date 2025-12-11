@@ -14,4 +14,21 @@ public class Login  extends PageObject {
             .located(By.id("login-button"));
     public static final Target LBL_PAGE = Target.the("Titulo ingreso")
             .located(By.cssSelector(".app_logo"));
+    public static String convertirNombreADataTest(String nombreProducto) {
+        return "add-to-cart-" + nombreProducto
+                .toLowerCase()
+                .replace("(", "")
+                .replace(")", "")
+                .replace(".", "")
+                .replace(" ", "-");
+    }
+
+    public static Target BOTON_AGREGAR_PRODUCTO(String nombreProducto) {
+        String dataTest = convertirNombreADataTest(nombreProducto);
+        return Target.the("Botón agregar al carrito para el producto " + nombreProducto)
+                .located(By.cssSelector("[data-test='" + dataTest + "']"));
+    }
+
+
+
 }

@@ -3,9 +3,10 @@
 Característica: : Login en https://www.saucedemo.com/
 
   @Login @regresion
-  Esquema del escenario: : Login Exitoso
+  Esquema del escenario: Login Exitoso
     Dado el usuario navega a la pagina autenticador
     Cuando el usuario ingresa las credenciales para autenticacion "<actor>"
+    Entonces el usuario visualiza pagina de inicio
 
     Ejemplos:
       | actor   |  |
