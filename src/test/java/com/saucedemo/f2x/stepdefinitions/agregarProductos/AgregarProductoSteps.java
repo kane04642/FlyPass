@@ -1,5 +1,6 @@
 package com.saucedemo.f2x.stepdefinitions.agregarProductos;
 
+import com.saucedemo.f2x.tasks.ValidarCarrito.ValidarProductoEnCarrito;
 import com.saucedemo.f2x.tasks.agregarProducto.AgregarProducto;
 import io.cucumber.java.es.Cuando;
 
@@ -15,6 +16,15 @@ public class AgregarProductoSteps {
         theActorInTheSpotlight().wasAbleTo(
                 AgregarProducto.alCarrito(producto1),
                 AgregarProducto.alCarrito(producto2)
+        );
+    }
+
+    @Cuando("el usuario valida  los productos en el carrito de compras")
+    public void elUsuarioValidaLosProductosEnElCarritoDeCompras(Map<String, String> producto) {
+        producto.values().forEach(nombreProducto ->
+                theActorInTheSpotlight().attemptsTo(
+                        ValidarProductoEnCarrito.conNombre(nombreProducto)
+                )
         );
     }
 }
