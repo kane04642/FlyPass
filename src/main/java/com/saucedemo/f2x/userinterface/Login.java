@@ -28,7 +28,12 @@ public class Login  extends PageObject {
         return Target.the("Botón agregar al carrito para el producto " + nombreProducto)
                 .located(By.cssSelector("[data-test='" + dataTest + "']"));
     }
+    public static Target PRODUCTO_EN_CARRITO(String nombreProducto) {
+        return Target.the("Producto '" + nombreProducto + "' en el carrito")
+                .located(By.xpath("//div[@data-test='inventory-item-name' and normalize-space(text())='" + nombreProducto + "']"));
+    }
 
-
+    public static final Target LNK_CARRITO = Target.the("Link carrito de compras")
+            .located(By.id("shopping_cart_container"));
 
 }
