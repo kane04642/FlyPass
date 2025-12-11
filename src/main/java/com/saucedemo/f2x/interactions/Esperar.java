@@ -1,4 +1,4 @@
-package com.davivienda.orange.interactions;
+package com.saucedemo.f2x.interactions;
 
 import net.serenitybdd.model.time.InternalSystemClock;
 import net.serenitybdd.screenplay.Actor;
