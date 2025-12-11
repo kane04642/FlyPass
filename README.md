@@ -116,9 +116,22 @@ Los step definitions orquestan las interacciones con Screenplay.
         Ruta:
         target/site/serenity/index.html
 
-## 🧱 Propuesta de CI/CD
-
-    Se propone archivo .yml ubicado en .github/workflows/ci-automation.yml (con descripcion de los pasos basicos) el cual usara gitActions para ejecutar la automatizaciòn desde un servidor dedicado
+## 🧱 Estrategia de CI/CD Basada en GitHub Actions para la Automatización de Pruebas
+- Objetivos:
+Integración continua ante cada push y pull request a la rama main.
+Ejecución de pruebas funcionales automatizadas.
+Generación y publicación de reportes Serenity y logs.
+Preparación automática del entorno (Java, Gradle).
+Validación del estado del build (aprobado o fallido)
+✔ Paso 1: Checkout del repositorio
+GitHub Actions descarga el código fuente para preparar el ambiente:
+✔ Paso 2: Configuración del entorno Java (JDK 17)
+El pipeline asegura que la automatización se ejecute con la versión correcta de Java:
+✔ Paso 3: Permisos para Gradle Wrapper
+✔ Paso 4: Limpieza de reportes previos: Garantiza que los reportes de Serenity no se mezclen con ejecuciones previas.
+✔ Paso 5: Ejecución de pruebas automatizadas
+✔ Paso 6: Publicación del Reporte Serenity
+✔ Paso 7: Publicación de logs y reportes adicionales
 
     👤 Autor
     
@@ -126,3 +139,4 @@ Los step definitions orquestan las interacciones con Screenplay.
     QA Automation Engineer
 
     14+ años de experiencia en QA Manual & Automation
+
